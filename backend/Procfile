@@ -1,0 +1,1 @@
+web: echo $FIREBASE_CREDENTIALS_JSON > /app/firebase-credentials.json && alembic upgrade head && uvicorn app.main:app --host 0.0.0.0 --port $PORT
