@@ -7,17 +7,28 @@ from sqlalchemy.orm import DeclarativeBase
 from app.config import settings
 
 
+# Ensure Supabase/Postgres URLs include SSL requirement.
+def _normalize_database_url(url: str) -> str:
+    if url.startswith("postgresql") and "ssl=" not in url and "sslmode=" not in url:
+        separator = "&" if "?" in url else "?"
+        return f"{url}{separator}ssl=require"
+    return url
+
+
+DATABASE_URL = _normalize_database_url(settings.DATABASE_URL)
+
+
 # Create async engine
 # SQLite doesn't support pool settings, so we configure conditionally
-if settings.DATABASE_URL.startswith("sqlite"):
+if DATABASE_URL.startswith("sqlite"):
     engine = create_async_engine(
-        settings.DATABASE_URL,
+        DATABASE_URL,
         echo=False,
         connect_args={"check_same_thread": False}
     )
 else:
     engine = create_async_engine(
-        settings.DATABASE_URL,
+        DATABASE_URL,
         echo=False,
         pool_pre_ping=True,
         pool_size=5,
