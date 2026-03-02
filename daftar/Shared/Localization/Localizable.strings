@@ -1,0 +1,197 @@
+/* 
+  Localizable.strings (English)
+  daftar
+*/
+
+// MARK: - Common
+"common.cancel" = "Cancel";
+"common.done" = "Done";
+"common.save" = "Save";
+"common.delete" = "Delete";
+"common.edit" = "Edit";
+"common.add" = "Add";
+"common.search" = "Search";
+"common.loading" = "Loading...";
+"common.error" = "Error";
+"common.success" = "Success";
+"common.retry" = "Retry";
+"common.ok" = "OK";
+"common.yes" = "Yes";
+"common.no" = "No";
+"common.all" = "All";
+"common.viewAll" = "View All";
+
+// MARK: - Auth
+"auth.login" = "Sign In";
+"auth.register" = "Create Account";
+"auth.logout" = "Log Out";
+"auth.email" = "Email";
+"auth.password" = "Password";
+"auth.confirmPassword" = "Confirm Password";
+"auth.name" = "Full Name";
+"auth.phone" = "Phone";
+"auth.forgotPassword" = "Forgot password?";
+"auth.welcomeBack" = "Welcome Back";
+"auth.signInToContinue" = "Sign in to continue";
+"auth.getStarted" = "Get Started";
+"auth.alreadyHaveAccount" = "I already have an account";
+
+// MARK: - Onboarding
+"onboarding.whoAreYou" = "Who are you?";
+"onboarding.selectRole" = "Select your role to continue";
+"onboarding.familyManager" = "Family Manager";
+"onboarding.familyManagerDesc" = "I manage household shopping and want to track purchases made by my staff";
+"onboarding.staffMember" = "Staff Member";
+"onboarding.staffMemberDesc" = "I shop on behalf of a family and want to submit receipts";
+"onboarding.continue" = "Continue";
+
+// MARK: - Dashboard
+"dashboard.title" = "Dashboard";
+"dashboard.goodMorning" = "Good morning";
+"dashboard.goodAfternoon" = "Good afternoon";
+"dashboard.goodEvening" = "Good evening";
+"dashboard.thisMonthSpending" = "This Month's Spending";
+"dashboard.pending" = "Pending";
+"dashboard.staff" = "Staff";
+"dashboard.stores" = "Stores";
+"dashboard.needsApproval" = "Needs Approval";
+"dashboard.recentTransactions" = "Recent Transactions";
+"dashboard.noTransactions" = "No Transactions";
+"dashboard.noTransactionsMessage" = "No transactions have been recorded yet";
+
+// MARK: - Transactions
+"transactions.title" = "Transactions";
+"transactions.noTransactions" = "No Transactions";
+"transactions.noTransactionsMessage" = "No transactions found matching your criteria";
+"transactions.detail" = "Transaction Details";
+"transactions.receiptImage" = "Receipt Image";
+"transactions.items" = "Items";
+"transactions.total" = "Total";
+"transactions.notes" = "Notes";
+"transactions.approve" = "Approve";
+"transactions.flag" = "Flag";
+"transactions.reject" = "Reject";
+"transactions.confirmApproval" = "Confirm Approval";
+"transactions.confirmApprovalMessage" = "Are you sure you want to approve this transaction?";
+"transactions.confirmRejection" = "Confirm Rejection";
+"transactions.confirmRejectionMessage" = "Are you sure you want to reject this transaction?";
+"transactions.flagTransaction" = "Flag Transaction";
+"transactions.addNote" = "Add a note for this flagged transaction";
+
+// MARK: - Transaction Status
+"status.pending" = "Pending";
+"status.approved" = "Approved";
+"status.flagged" = "Flagged";
+"status.rejected" = "Rejected";
+
+// MARK: - Staff
+"staff.title" = "Staff Management";
+"staff.noStaff" = "No Staff";
+"staff.noStaffMessage" = "Add staff members to start tracking their purchases";
+"staff.addStaff" = "Add Staff";
+"staff.staffInfo" = "Staff Information";
+"staff.role" = "Role";
+"staff.spendingLimit" = "Spending Limit";
+"staff.setSpendingLimit" = "Set Spending Limit";
+"staff.spendingLimitInfo" = "Monthly spending limit for this staff member. Leave empty for unlimited.";
+"staff.removeStaff" = "Remove Staff Member";
+"staff.removeStaffConfirm" = "Are you sure you want to remove this staff member? They will lose access to your family account.";
+"staff.inviteCode" = "Invite Code";
+"staff.inviteSent" = "An invitation will be sent to the staff member's email to join your family account.";
+"staff.inactive" = "Inactive";
+"staff.active" = "Active";
+"staff.limit" = "Limit";
+"staff.statistics" = "Statistics";
+"staff.totalTransactions" = "Total Transactions";
+"staff.joined" = "Joined";
+
+// MARK: - Staff Roles
+"staffRole.driver" = "Driver";
+"staffRole.helper" = "Helper";
+"staffRole.other" = "Other";
+
+// MARK: - Stores
+"stores.title" = "Stores";
+"stores.noStores" = "No Stores";
+"stores.noStoresMessage" = "Connect stores to track your purchases";
+"stores.addStore" = "Add Store";
+"stores.enterCode" = "Enter Store Code";
+"stores.enterCodeDesc" = "Ask the store for their code to connect directly";
+"stores.connect" = "Connect";
+"stores.orSearch" = "Or Search for a Store";
+"stores.searchPlaceholder" = "Store name...";
+"stores.balance" = "Balance";
+"stores.connected" = "Connected";
+
+// MARK: - Receipt Capture
+"capture.title" = "Capture Receipt";
+"capture.takePhoto" = "Take Photo";
+"capture.chooseFromLibrary" = "Choose from Library";
+"capture.capturePhotoTitle" = "Capture Receipt Photo";
+"capture.capturePhotoMessage" = "Make sure the receipt is clear and readable";
+"capture.processing" = "Processing receipt...";
+"capture.notesOptional" = "Notes (optional)";
+"capture.notesPlaceholder" = "e.g., Eid party groceries";
+"capture.submit" = "Submit";
+"capture.confidence" = "Confidence";
+
+// MARK: - Driver
+"driver.home" = "Home";
+"driver.captureReceipt" = "Capture Receipt";
+"driver.captureReceiptDesc" = "Take a photo of your receipt to record purchases";
+"driver.today" = "Today";
+"driver.transactions" = "transactions";
+"driver.totalSpent" = "spent";
+"driver.recentSubmissions" = "Recent Submissions";
+"driver.noSubmissions" = "No Submissions";
+"driver.noSubmissionsMessage" = "You haven't submitted any transactions yet";
+"driver.history" = "History";
+
+// MARK: - Settings
+"settings.title" = "Settings";
+"settings.subscription" = "Subscription";
+"settings.currentPlan" = "Current Plan";
+"settings.manageSubscription" = "Manage Subscription";
+"settings.language" = "Language";
+"settings.preferences" = "Preferences";
+"settings.notifications" = "Notifications";
+"settings.support" = "Support";
+"settings.helpCenter" = "Help Center";
+"settings.contactUs" = "Contact Us";
+"settings.privacyPolicy" = "Privacy Policy";
+"settings.termsOfService" = "Terms of Service";
+"settings.about" = "About";
+"settings.version" = "Version";
+"settings.logoutConfirm" = "Are you sure you want to log out?";
+
+// MARK: - Notifications Settings
+"notifications.newTransactions" = "New Transactions";
+"notifications.flaggedTransactions" = "Flagged Transactions";
+"notifications.monthlyReports" = "Monthly Reports";
+"notifications.description" = "Choose which notifications you want to receive";
+
+// MARK: - Categories
+"category.produce" = "Produce";
+"category.dairy" = "Dairy";
+"category.meat" = "Meat";
+"category.bakery" = "Bakery";
+"category.beverages" = "Beverages";
+"category.household" = "Household";
+"category.personalCare" = "Personal Care";
+"category.other" = "Other";
+
+// MARK: - Reports
+"reports.monthly" = "Monthly Report";
+"reports.spending" = "Spending";
+"reports.byCategory" = "By Category";
+"reports.byStore" = "By Store";
+"reports.byStaff" = "By Staff";
+"reports.topItems" = "Top Items";
+"reports.downloadPDF" = "Download PDF";
+
+// MARK: - Errors
+"error.generic" = "An error occurred";
+"error.network" = "Network connection error";
+"error.invalidCredentials" = "Invalid email or password";
+"error.sessionExpired" = "Session expired. Please log in again";
+"error.unauthorized" = "Unauthorized access";

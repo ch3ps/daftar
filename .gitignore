@@ -1,0 +1,54 @@
+# ── macOS ──────────────────────────────────────
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# ── Xcode ──────────────────────────────────────
+build/
+DerivedData/
+*.pbxuser
+!default.pbxuser
+*.mode1v3
+!default.mode1v3
+*.mode2v3
+!default.mode2v3
+*.perspectivev3
+!default.perspectivev3
+xcuserdata/
+*.xccheckout
+*.moved-aside
+*.xcuserstate
+*.xcscmblueprint
+.swp
+
+# ── Swift Package Manager ───────────────────────
+.build/
+Packages/
+Package.resolved
+*.resolved
+
+# ── Python / Backend ───────────────────────────
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.pyc
+.Python
+.venv/
+venv/
+env/
+.env.local
+*.egg-info/
+dist/
+*.log
+
+# Database files (never commit real data)
+backend/daftar.db
+backend/*.db
+backend/uploads/
+
+# ── Secrets — NEVER commit these ───────────────
+backend/.env
+backend/firebase-credentials.json
+backend/*-credentials.json
+GoogleService-Info.plist

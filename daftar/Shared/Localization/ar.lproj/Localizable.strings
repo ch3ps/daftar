@@ -1,0 +1,197 @@
+/* 
+  Localizable.strings (Arabic)
+  daftar
+*/
+
+// MARK: - Common
+"common.cancel" = "إلغاء";
+"common.done" = "تم";
+"common.save" = "حفظ";
+"common.delete" = "حذف";
+"common.edit" = "تعديل";
+"common.add" = "إضافة";
+"common.search" = "بحث";
+"common.loading" = "جاري التحميل...";
+"common.error" = "خطأ";
+"common.success" = "نجاح";
+"common.retry" = "إعادة المحاولة";
+"common.ok" = "موافق";
+"common.yes" = "نعم";
+"common.no" = "لا";
+"common.all" = "الكل";
+"common.viewAll" = "عرض الكل";
+
+// MARK: - Auth
+"auth.login" = "تسجيل الدخول";
+"auth.register" = "إنشاء حساب";
+"auth.logout" = "تسجيل الخروج";
+"auth.email" = "البريد الإلكتروني";
+"auth.password" = "كلمة المرور";
+"auth.confirmPassword" = "تأكيد كلمة المرور";
+"auth.name" = "الاسم الكامل";
+"auth.phone" = "رقم الهاتف";
+"auth.forgotPassword" = "نسيت كلمة المرور؟";
+"auth.welcomeBack" = "مرحباً بعودتك";
+"auth.signInToContinue" = "سجل الدخول للمتابعة";
+"auth.getStarted" = "ابدأ الآن";
+"auth.alreadyHaveAccount" = "لدي حساب بالفعل";
+
+// MARK: - Onboarding
+"onboarding.whoAreYou" = "من أنت؟";
+"onboarding.selectRole" = "اختر دورك للمتابعة";
+"onboarding.familyManager" = "مدير العائلة";
+"onboarding.familyManagerDesc" = "أدير مشتريات المنزل وأريد تتبع مشتريات موظفيي";
+"onboarding.staffMember" = "موظف";
+"onboarding.staffMemberDesc" = "أتسوق نيابة عن عائلة وأريد إرسال الفواتير";
+"onboarding.continue" = "متابعة";
+
+// MARK: - Dashboard
+"dashboard.title" = "الرئيسية";
+"dashboard.goodMorning" = "صباح الخير";
+"dashboard.goodAfternoon" = "مساء الخير";
+"dashboard.goodEvening" = "مساء الخير";
+"dashboard.thisMonthSpending" = "إجمالي الإنفاق هذا الشهر";
+"dashboard.pending" = "قيد الانتظار";
+"dashboard.staff" = "الموظفين";
+"dashboard.stores" = "المتاجر";
+"dashboard.needsApproval" = "تحتاج موافقة";
+"dashboard.recentTransactions" = "المعاملات الأخيرة";
+"dashboard.noTransactions" = "لا توجد معاملات";
+"dashboard.noTransactionsMessage" = "لم يتم تسجيل أي معاملات بعد";
+
+// MARK: - Transactions
+"transactions.title" = "المعاملات";
+"transactions.noTransactions" = "لا توجد معاملات";
+"transactions.noTransactionsMessage" = "لم يتم العثور على معاملات تطابق المعايير";
+"transactions.detail" = "تفاصيل المعاملة";
+"transactions.receiptImage" = "صورة الفاتورة";
+"transactions.items" = "العناصر";
+"transactions.total" = "المجموع";
+"transactions.notes" = "ملاحظات";
+"transactions.approve" = "موافقة";
+"transactions.flag" = "تعليم";
+"transactions.reject" = "رفض";
+"transactions.confirmApproval" = "تأكيد الموافقة";
+"transactions.confirmApprovalMessage" = "هل تريد الموافقة على هذه المعاملة؟";
+"transactions.confirmRejection" = "تأكيد الرفض";
+"transactions.confirmRejectionMessage" = "هل تريد رفض هذه المعاملة؟";
+"transactions.flagTransaction" = "تعليم المعاملة";
+"transactions.addNote" = "أضف ملاحظة لهذه المعاملة المعلمة";
+
+// MARK: - Transaction Status
+"status.pending" = "قيد الانتظار";
+"status.approved" = "تمت الموافقة";
+"status.flagged" = "مُعلَّم";
+"status.rejected" = "مرفوض";
+
+// MARK: - Staff
+"staff.title" = "إدارة الموظفين";
+"staff.noStaff" = "لا يوجد موظفين";
+"staff.noStaffMessage" = "أضف موظفين للبدء في تتبع مشترياتهم";
+"staff.addStaff" = "إضافة موظف";
+"staff.staffInfo" = "معلومات الموظف";
+"staff.role" = "الدور";
+"staff.spendingLimit" = "حد الإنفاق";
+"staff.setSpendingLimit" = "تعيين حد للإنفاق";
+"staff.spendingLimitInfo" = "حد الإنفاق الشهري للموظف. اتركه فارغًا للسماح بإنفاق غير محدود.";
+"staff.removeStaff" = "حذف الموظف";
+"staff.removeStaffConfirm" = "هل أنت متأكد من حذف هذا الموظف؟ لن يتمكن من الوصول إلى حسابك العائلي.";
+"staff.inviteCode" = "رمز الدعوة";
+"staff.inviteSent" = "سيتم إرسال دعوة للموظف عبر البريد الإلكتروني للانضمام إلى حسابك العائلي.";
+"staff.inactive" = "غير نشط";
+"staff.active" = "نشط";
+"staff.limit" = "الحد";
+"staff.statistics" = "الإحصائيات";
+"staff.totalTransactions" = "إجمالي المعاملات";
+"staff.joined" = "تاريخ الانضمام";
+
+// MARK: - Staff Roles
+"staffRole.driver" = "سائق";
+"staffRole.helper" = "مساعد";
+"staffRole.other" = "آخر";
+
+// MARK: - Stores
+"stores.title" = "المتاجر";
+"stores.noStores" = "لا توجد متاجر";
+"stores.noStoresMessage" = "قم بربط المتاجر لتتبع مشترياتك";
+"stores.addStore" = "إضافة متجر";
+"stores.enterCode" = "أدخل رمز المتجر";
+"stores.enterCodeDesc" = "اطلب الرمز من المتجر للربط مباشرة";
+"stores.connect" = "ربط";
+"stores.orSearch" = "أو ابحث عن متجر";
+"stores.searchPlaceholder" = "اسم المتجر...";
+"stores.balance" = "الرصيد";
+"stores.connected" = "متصل";
+
+// MARK: - Receipt Capture
+"capture.title" = "التقاط فاتورة";
+"capture.takePhoto" = "التقاط صورة";
+"capture.chooseFromLibrary" = "اختيار من المكتبة";
+"capture.capturePhotoTitle" = "التقط صورة للفاتورة";
+"capture.capturePhotoMessage" = "تأكد من أن الفاتورة واضحة ومقروءة";
+"capture.processing" = "جاري معالجة الفاتورة...";
+"capture.notesOptional" = "ملاحظات (اختياري)";
+"capture.notesPlaceholder" = "مثال: مشتريات حفلة العيد";
+"capture.submit" = "إرسال";
+"capture.confidence" = "الثقة";
+
+// MARK: - Driver
+"driver.home" = "الرئيسية";
+"driver.captureReceipt" = "التقاط فاتورة";
+"driver.captureReceiptDesc" = "التقط صورة للفاتورة لتسجيل المشتريات";
+"driver.today" = "اليوم";
+"driver.transactions" = "معاملة";
+"driver.totalSpent" = "الإنفاق";
+"driver.recentSubmissions" = "المعاملات الأخيرة";
+"driver.noSubmissions" = "لا توجد معاملات";
+"driver.noSubmissionsMessage" = "لم تقم بتسجيل أي معاملات بعد";
+"driver.history" = "السجل";
+
+// MARK: - Settings
+"settings.title" = "الإعدادات";
+"settings.subscription" = "الاشتراك";
+"settings.currentPlan" = "الخطة الحالية";
+"settings.manageSubscription" = "إدارة الاشتراك";
+"settings.language" = "اللغة";
+"settings.preferences" = "التفضيلات";
+"settings.notifications" = "الإشعارات";
+"settings.support" = "الدعم";
+"settings.helpCenter" = "مركز المساعدة";
+"settings.contactUs" = "اتصل بنا";
+"settings.privacyPolicy" = "سياسة الخصوصية";
+"settings.termsOfService" = "شروط الخدمة";
+"settings.about" = "حول";
+"settings.version" = "الإصدار";
+"settings.logoutConfirm" = "هل أنت متأكد من تسجيل الخروج؟";
+
+// MARK: - Notifications Settings
+"notifications.newTransactions" = "معاملات جديدة";
+"notifications.flaggedTransactions" = "المعاملات المعلمة";
+"notifications.monthlyReports" = "التقارير الشهرية";
+"notifications.description" = "اختر الإشعارات التي تريد تلقيها";
+
+// MARK: - Categories
+"category.produce" = "خضروات وفواكه";
+"category.dairy" = "ألبان";
+"category.meat" = "لحوم";
+"category.bakery" = "مخبوزات";
+"category.beverages" = "مشروبات";
+"category.household" = "منزلية";
+"category.personalCare" = "عناية شخصية";
+"category.other" = "أخرى";
+
+// MARK: - Reports
+"reports.monthly" = "التقرير الشهري";
+"reports.spending" = "الإنفاق";
+"reports.byCategory" = "حسب الفئة";
+"reports.byStore" = "حسب المتجر";
+"reports.byStaff" = "حسب الموظف";
+"reports.topItems" = "أكثر المنتجات شراءً";
+"reports.downloadPDF" = "تحميل PDF";
+
+// MARK: - Errors
+"error.generic" = "حدث خطأ";
+"error.network" = "خطأ في الاتصال بالشبكة";
+"error.invalidCredentials" = "بريد إلكتروني أو كلمة مرور غير صحيحة";
+"error.sessionExpired" = "انتهت صلاحية الجلسة. يرجى تسجيل الدخول مرة أخرى";
+"error.unauthorized" = "غير مصرح بالوصول";
