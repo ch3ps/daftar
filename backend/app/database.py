@@ -17,6 +17,10 @@ def _normalize_database_url(url: str) -> str:
 
 DATABASE_URL = _normalize_database_url(settings.DATABASE_URL)
 
+# Supabase pooler (pgBouncer transaction mode) is incompatible with asyncpg
+# prepared statement caching. Disable statement cache for reliability.
+POSTGRES_CONNECT_ARGS = {"statement_cache_size": 0}
+
 
 # Create async engine
 # SQLite doesn't support pool settings, so we configure conditionally
@@ -30,6 +34,7 @@ else:
     engine = create_async_engine(
         DATABASE_URL,
         echo=False,
+        connect_args=POSTGRES_CONNECT_ARGS,
         pool_pre_ping=True,
         pool_size=5,
         max_overflow=10
