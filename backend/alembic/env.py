@@ -19,12 +19,8 @@ from app.models import *  # noqa
 config = context.config
 
 # Override sqlalchemy.url from DATABASE_URL env var (used on Railway/Supabase)
-# Alembic uses sync drivers, so convert asyncpg → psycopg2 style URL for migrations
+# Keep async driver URLs intact (e.g. postgresql+asyncpg://)
 _db_url = os.environ.get("DATABASE_URL", "")
-if _db_url.startswith("postgresql+asyncpg://"):
-    _db_url = _db_url.replace("postgresql+asyncpg://", "postgresql://", 1)
-elif _db_url.startswith("sqlite+aiosqlite:///"):
-    _db_url = _db_url.replace("sqlite+aiosqlite:///", "sqlite:///", 1)
 
 if _db_url:
     config.set_main_option("sqlalchemy.url", _db_url)
