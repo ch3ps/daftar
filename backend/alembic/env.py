@@ -21,6 +21,10 @@ config = context.config
 # Override sqlalchemy.url from DATABASE_URL env var (used on Railway/Supabase)
 # Keep async driver URLs intact (e.g. postgresql+asyncpg://)
 _db_url = os.environ.get("DATABASE_URL", "")
+if _db_url.startswith("postgres://"):
+    _db_url = _db_url.replace("postgres://", "postgresql+asyncpg://", 1)
+elif _db_url.startswith("postgresql://"):
+    _db_url = _db_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 if _db_url.startswith("postgresql") and "ssl=" not in _db_url and "sslmode=" not in _db_url:
     separator = "&" if "?" in _db_url else "?"
     _db_url = f"{_db_url}{separator}ssl=require"

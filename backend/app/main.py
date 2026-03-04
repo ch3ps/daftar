@@ -77,8 +77,11 @@ app.add_middleware(
 # Create tables on startup
 @app.on_event("startup")
 async def startup():
-    from app.database import create_tables
-    await create_tables()
+    # In production, schema is managed by Alembic migrations.
+    # Auto create_tables is only for local/dev convenience.
+    if settings.ENVIRONMENT != "production":
+        from app.database import create_tables
+        await create_tables()
     print(f"✅ Daftar API started in {settings.ENVIRONMENT} mode")
 
 

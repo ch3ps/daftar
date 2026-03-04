@@ -9,6 +9,10 @@ from app.config import settings
 
 # Ensure Supabase/Postgres URLs include SSL requirement.
 def _normalize_database_url(url: str) -> str:
+    if url.startswith("postgres://"):
+        url = url.replace("postgres://", "postgresql+asyncpg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+asyncpg://", 1)
     if url.startswith("postgresql") and "ssl=" not in url and "sslmode=" not in url:
         separator = "&" if "?" in url else "?"
         return f"{url}{separator}ssl=require"
