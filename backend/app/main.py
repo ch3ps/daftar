@@ -192,7 +192,8 @@ async def request_otp(request: Request, data: SendOTPRequest):
     success, message = await send_otp(phone)
     
     if not success:
-        raise HTTPException(status_code=429, detail=message)
+        status_code = 503 if "configured" in message.lower() or "twilio" in message.lower() else 429
+        raise HTTPException(status_code=status_code, detail=message)
     
     response = {"message": "OTP sent", "phone": phone}
     
@@ -210,6 +211,10 @@ async def request_otp(request: Request, data: SendOTPRequest):
 async def register_store(request: Request, data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """Register a new store with OTP verification"""
     phone = normalize_phone(data.phone)
+
+    valid, message = await verify_otp(phone, data.code)
+    if not valid:
+        raise HTTPException(status_code=401, detail=message)
     
     # Check if phone exists
     result = await db.execute(select(Store).where(Store.phone == phone))
@@ -263,6 +268,10 @@ async def get_store_profile(store: Store = Depends(get_current_store)):
 async def register_customer(request: Request, data: RegisterRequest, db: AsyncSession = Depends(get_db)):
     """Register a new customer"""
     phone = normalize_phone(data.phone)
+
+    valid, message = await verify_otp(phone, data.code)
+    if not valid:
+        raise HTTPException(status_code=401, detail=message)
     
     result = await db.execute(select(Customer).where(Customer.phone == phone))
     if result.scalar_one_or_none():

@@ -10,6 +10,7 @@ import SwiftUI
 struct WelcomeView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var authManager: AuthManager
+    @State private var selectedRole: UserType?
     
     var body: some View {
         GeometryReader { geo in
@@ -53,9 +54,7 @@ struct WelcomeView: View {
                     
                     // Store button
                     Button {
-                        Task {
-                            await authManager.enterAsDemoStore()
-                        }
+                        selectedRole = .store
                     } label: {
                         RoleCard(
                             icon: "storefront.fill",
@@ -64,15 +63,14 @@ struct WelcomeView: View {
                                 "Track what customers owe you",
                                 arabic: "تتبع ما يدين به العملاء"
                             ),
-                            isLoading: authManager.isLoading && authManager.userType == nil,
+                            isLoading: false,
                             color: .accentColor
                         )
                     }
-                    .disabled(authManager.isLoading)
                     
                     // Customer button
                     Button {
-                        authManager.enterAsDemoCustomer()
+                        selectedRole = .customer
                     } label: {
                         RoleCard(
                             icon: "person.fill",
@@ -85,7 +83,15 @@ struct WelcomeView: View {
                             color: .green
                         )
                     }
-                    .disabled(authManager.isLoading)
+                    
+                    Text(appState.localized(
+                        "Sign in or create an account with your phone number.",
+                        arabic: "سجّل الدخول أو أنشئ حساباً برقم هاتفك."
+                    ))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.top, 4)
                     
                     // Error message
                     if let error = authManager.error {
@@ -125,6 +131,13 @@ struct WelcomeView: View {
             .background(Color(.systemBackground))
         }
         .environment(\.layoutDirection, appState.layoutDirection)
+        .sheet(item: $selectedRole) { role in
+            AuthSheetView(role: role)
+                .environmentObject(appState)
+                .environmentObject(authManager)
+                .presentationDetents([.large])
+                .presentationDragIndicator(.visible)
+        }
     }
 }
 
@@ -174,6 +187,275 @@ struct RoleCard: View {
         .padding()
         .background(Color(.secondarySystemBackground))
         .clipShape(RoundedRectangle(cornerRadius: 16))
+    }
+}
+
+extension UserType: Identifiable {
+    var id: String { rawValue }
+}
+
+private enum AuthMode: String, CaseIterable, Identifiable {
+    case signIn
+    case signUp
+    
+    var id: String { rawValue }
+}
+
+private struct AuthSheetView: View {
+    @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject var appState: AppState
+    @EnvironmentObject var authManager: AuthManager
+    
+    let role: UserType
+    
+    @State private var mode: AuthMode = .signIn
+    @State private var phone = ""
+    @State private var name = ""
+    @State private var nameAr = ""
+    @State private var code = ""
+    @State private var isSendingOTP = false
+    @State private var otpSent = false
+    @State private var infoMessage: String?
+    @State private var localError: String?
+    
+    var body: some View {
+        NavigationStack {
+            ScrollView {
+                VStack(alignment: .leading, spacing: 20) {
+                    Picker("", selection: $mode) {
+                        Text(appState.localized("Sign In", arabic: "تسجيل الدخول"))
+                            .tag(AuthMode.signIn)
+                        Text(appState.localized("Create Account", arabic: "إنشاء حساب"))
+                            .tag(AuthMode.signUp)
+                    }
+                    .pickerStyle(.segmented)
+                    
+                    VStack(alignment: .leading, spacing: 8) {
+                        Text(roleTitle)
+                            .font(.title2.weight(.bold))
+                        Text(appState.localized(
+                            "Use your phone number and a one-time code.",
+                            arabic: "استخدم رقم هاتفك ورمز التحقق لمرة واحدة."
+                        ))
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                    }
+                    
+                    if mode == .signUp {
+                        VStack(spacing: 12) {
+                            textField(
+                                title: appState.localized("Full Name", arabic: "الاسم الكامل"),
+                                text: $name
+                            )
+                            textField(
+                                title: appState.localized("Arabic Name (optional)", arabic: "الاسم بالعربية (اختياري)"),
+                                text: $nameAr
+                            )
+                        }
+                    }
+                    
+                    VStack(spacing: 12) {
+                        textField(
+                            title: appState.localized("Phone Number", arabic: "رقم الهاتف"),
+                            text: $phone,
+                            keyboard: .phonePad
+                        )
+                        
+                        HStack(alignment: .top, spacing: 12) {
+                            textField(
+                                title: appState.localized("OTP Code", arabic: "رمز التحقق"),
+                                text: $code,
+                                keyboard: .numberPad
+                            )
+                            
+                            Button {
+                                Task { await sendOTP() }
+                            } label: {
+                                HStack {
+                                    if isSendingOTP {
+                                        ProgressView()
+                                    } else {
+                                        Text(otpSent
+                                            ? appState.localized("Resend", arabic: "إعادة الإرسال")
+                                            : appState.localized("Send Code", arabic: "إرسال الرمز"))
+                                    }
+                                }
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .padding(.horizontal, 14)
+                                .padding(.vertical, 14)
+                                .frame(minWidth: 110)
+                                .background(Color.accentColor)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                            }
+                            .disabled(isSendingOTP || normalizedPhone.isEmpty)
+                        }
+                    }
+                    
+                    if let infoMessage {
+                        Text(infoMessage)
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    
+                    if let errorMessage = localError ?? authManager.error {
+                        Text(errorMessage)
+                            .font(.caption)
+                            .foregroundStyle(.red)
+                    }
+                    
+                    Button {
+                        Task { await submit() }
+                    } label: {
+                        HStack {
+                            if authManager.isLoading {
+                                ProgressView()
+                                    .tint(.white)
+                            } else {
+                                Text(primaryButtonTitle)
+                                    .font(.headline)
+                            }
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 16)
+                        .foregroundStyle(.white)
+                        .background(
+                            canSubmit
+                                ? Color.accentColor
+                                : Color.gray.opacity(0.45)
+                        )
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(!canSubmit || authManager.isLoading)
+                }
+                .padding(24)
+            }
+            .navigationTitle(mode == .signIn
+                ? appState.localized("Sign In", arabic: "تسجيل الدخول")
+                : appState.localized("Create Account", arabic: "إنشاء حساب"))
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button(appState.localized("Cancel", arabic: "إلغاء")) {
+                        dismiss()
+                    }
+                }
+            }
+        }
+    }
+    
+    private var roleTitle: String {
+        role == .store
+            ? appState.localized("Store account", arabic: "حساب متجر")
+            : appState.localized("Customer account", arabic: "حساب عميل")
+    }
+    
+    private var primaryButtonTitle: String {
+        if mode == .signIn {
+            return role == .store
+                ? appState.localized("Sign In as Store", arabic: "دخول كمتجر")
+                : appState.localized("Sign In as Customer", arabic: "دخول كعميل")
+        }
+        
+        return role == .store
+            ? appState.localized("Create Store Account", arabic: "إنشاء حساب متجر")
+            : appState.localized("Create Customer Account", arabic: "إنشاء حساب عميل")
+    }
+    
+    private var normalizedPhone: String {
+        phone.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+    
+    private var canSubmit: Bool {
+        let baseValid = !normalizedPhone.isEmpty && !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        if mode == .signIn {
+            return baseValid
+        }
+        return baseValid && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+    }
+    
+    @ViewBuilder
+    private func textField(title: String, text: Binding<String>, keyboard: UIKeyboardType = .default) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.subheadline.weight(.medium))
+            TextField(title, text: text)
+                .keyboardType(keyboard)
+                .textInputAutocapitalization(.never)
+                .autocorrectionDisabled()
+                .padding(.horizontal, 14)
+                .padding(.vertical, 14)
+                .background(Color(.secondarySystemBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
+        }
+    }
+    
+    private func sendOTP() async {
+        localError = nil
+        infoMessage = nil
+        
+        guard !normalizedPhone.isEmpty else {
+            localError = appState.localized("Enter your phone number first.", arabic: "أدخل رقم الهاتف أولاً.")
+            return
+        }
+        
+        isSendingOTP = true
+        defer { isSendingOTP = false }
+        
+        do {
+            let response = try await APIClient.shared.sendOTP(phone: normalizedPhone)
+            otpSent = true
+            infoMessage = response.message
+            if let devOTP = response.devOtp, !devOTP.isEmpty {
+                infoMessage = "\(response.message) (\(devOTP))"
+            }
+        } catch let apiError as APIError {
+            localError = apiError.errorDescription
+        } catch {
+            localError = error.localizedDescription
+        }
+    }
+    
+    private func submit() async {
+        localError = nil
+        
+        do {
+            if mode == .signIn {
+                if role == .store {
+                    try await authManager.loginStore(phone: normalizedPhone, code: code)
+                } else {
+                    try await authManager.loginCustomer(phone: normalizedPhone, code: code)
+                }
+            } else {
+                if role == .store {
+                    try await authManager.registerStore(
+                        name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                        nameAr: nameAr.nilIfBlank,
+                        phone: normalizedPhone,
+                        code: code
+                    )
+                } else {
+                    try await authManager.registerCustomer(
+                        name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                        nameAr: nameAr.nilIfBlank,
+                        phone: normalizedPhone,
+                        code: code
+                    )
+                }
+            }
+        } catch let authError as AuthError {
+            localError = authError.errorDescription
+        } catch {
+            localError = error.localizedDescription
+        }
+    }
+}
+
+private extension String {
+    var nilIfBlank: String? {
+        let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
+        return trimmed.isEmpty ? nil : trimmed
     }
 }
 

@@ -84,16 +84,13 @@ struct CustomerAuthResponse: Codable {
 final class APIClient {
     static let shared = APIClient()
     
-    // Change this to your backend URL
-    // For local development: "http://localhost:8000/api/v1"
-    // For simulator: "http://127.0.0.1:8000/api/v1"
-    // For real device on same network: "http://YOUR_LOCAL_IP:8000/api/v1"
     private var baseURL: String {
-        #if DEBUG
-        return "http://127.0.0.1:8000/api/v1"
-        #else
+        if let override = ProcessInfo.processInfo.environment["API_BASE_URL"],
+           !override.isEmpty {
+            return override
+        }
+
         return "https://daftar-production-3865.up.railway.app/api/v1"
-        #endif
     }
     
     private let session: URLSession
@@ -220,13 +217,19 @@ final class APIClient {
         return try await request("POST", path: "/auth/store/login", body: Body(phone: phone, code: code), authenticated: false)
     }
     
-    func registerStore(name: String, nameAr: String?, phone: String) async throws -> StoreAuthResponse {
+    func registerStore(name: String, nameAr: String?, phone: String, code: String) async throws -> StoreAuthResponse {
         struct Body: Codable {
             let name: String
             let name_ar: String?
             let phone: String
+            let code: String
         }
-        return try await request("POST", path: "/auth/store/register", body: Body(name: name, name_ar: nameAr, phone: phone), authenticated: false)
+        return try await request(
+            "POST",
+            path: "/auth/store/register",
+            body: Body(name: name, name_ar: nameAr, phone: phone, code: code),
+            authenticated: false
+        )
     }
     
     func getStoreProfile() async throws -> StoreProfile {
@@ -243,13 +246,19 @@ final class APIClient {
         return try await request("POST", path: "/auth/customer/login", body: Body(phone: phone, code: code), authenticated: false)
     }
     
-    func registerCustomer(name: String, nameAr: String?, phone: String) async throws -> CustomerAuthResponse {
+    func registerCustomer(name: String, nameAr: String?, phone: String, code: String) async throws -> CustomerAuthResponse {
         struct Body: Codable {
             let name: String
             let name_ar: String?
             let phone: String
+            let code: String
         }
-        return try await request("POST", path: "/auth/customer/register", body: Body(name: name, name_ar: nameAr, phone: phone), authenticated: false)
+        return try await request(
+            "POST",
+            path: "/auth/customer/register",
+            body: Body(name: name, name_ar: nameAr, phone: phone, code: code),
+            authenticated: false
+        )
     }
     
     func getCustomerProfile() async throws -> CustomerProfile {

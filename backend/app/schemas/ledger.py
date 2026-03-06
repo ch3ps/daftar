@@ -196,6 +196,7 @@ class RegisterRequest(BaseModel):
     name: str
     name_ar: Optional[str] = None
     phone: str
+    code: str
 
 
 class JoinStoreRequest(BaseModel):

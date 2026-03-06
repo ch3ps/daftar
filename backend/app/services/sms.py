@@ -3,12 +3,15 @@ SMS OTP service using Twilio Verify in production.
 Falls back to an in-memory OTP store for local development.
 """
 import asyncio
+import logging
 import random
 import string
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
 
 from app.config import settings
+
+logger = logging.getLogger(__name__)
 
 
 # In-memory OTP storage (use Redis in production for multi-instance)
@@ -29,6 +32,10 @@ def _build_twilio_client():
     from twilio.rest import Client
 
     return Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
+
+
+def _is_production() -> bool:
+    return settings.ENVIRONMENT.lower() == "production"
 
 
 def generate_otp() -> str:
@@ -60,6 +67,9 @@ async def send_otp(phone: str) -> Tuple[bool, str]:
                 entry["attempts"] = 0
     
     if not _is_twilio_configured():
+        if _is_production():
+            return False, "OTP service is not configured on the server."
+
         # Local development fallback
         code = generate_otp()
         expires_at = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
@@ -73,6 +83,10 @@ async def send_otp(phone: str) -> Tuple[bool, str]:
         return True, "OTP sent (dev mode)"
 
     try:
+        from twilio.base.exceptions import TwilioRestException
+
+        logger.info(f"[SMS] Sending OTP to {phone} via Twilio Verify "
+                     f"(service: {settings.TWILIO_VERIFY_SERVICE_SID[:8]}...)")
         client = _build_twilio_client()
         verification = await asyncio.to_thread(
             client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verifications.create,
@@ -80,14 +94,18 @@ async def send_otp(phone: str) -> Tuple[bool, str]:
             channel="sms",
         )
 
+        logger.info(f"[SMS] Twilio response status: {verification.status} for {phone}")
         if verification.status in {"pending", "approved"}:
             return True, "OTP sent successfully"
 
-        print(f"[SMS] Twilio verification status: {verification.status}")
-        return False, "Failed to send OTP"
+        return False, f"Failed to send OTP (status: {verification.status})"
+    except TwilioRestException as e:
+        logger.error(f"[SMS] Twilio verification error {e.code}: {e.msg} "
+                      f"(phone: {phone}, status: {e.status})")
+        return False, f"Twilio could not send the OTP: {e.msg}"
     except Exception as e:
-        print(f"[SMS] Twilio exception: {e}")
-        return False, "Failed to send OTP"
+        logger.error(f"[SMS] Twilio exception: {type(e).__name__}: {e}")
+        return False, f"Failed to send OTP: {e}"
 
 
 async def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
@@ -104,6 +122,9 @@ async def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
     phone = normalize_phone(phone)
     
     if not _is_twilio_configured():
+        if _is_production():
+            return False, "OTP service is not configured on the server."
+
         if phone not in _otp_store:
             return False, "No OTP requested for this number"
 
@@ -131,6 +152,8 @@ async def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
         return False, f"Invalid code. {remaining} attempts remaining."
 
     try:
+        from twilio.base.exceptions import TwilioRestException
+
         client = _build_twilio_client()
         check = await asyncio.to_thread(
             client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verification_checks.create,
@@ -138,13 +161,17 @@ async def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
             code=code,
         )
 
+        logger.info(f"[SMS] Twilio verify status: {check.status} for {phone}")
         if check.status == "approved":
             return True, "OTP verified"
 
         return False, "Invalid or expired code"
+    except TwilioRestException as e:
+        logger.error(f"[SMS] Twilio verify error {e.code}: {e.msg} (phone: {phone})")
+        return False, f"Twilio could not verify the OTP: {e.msg}"
     except Exception as e:
-        print(f"[SMS] Twilio verify exception: {e}")
-        return False, "Failed to verify OTP"
+        logger.error(f"[SMS] Twilio verify exception: {type(e).__name__}: {e}")
+        return False, f"Failed to verify OTP: {e}"
 
 
 def normalize_phone(phone: str) -> str:

@@ -85,13 +85,13 @@ final class AuthManager: ObservableObject {
     // MARK: - Store Authentication
     
     /// Register a new store with the backend
-    func registerStore(name: String, nameAr: String?, phone: String) async throws {
+    func registerStore(name: String, nameAr: String?, phone: String, code: String) async throws {
         isLoading = true
         error = nil
         defer { isLoading = false }
         
         do {
-            let response = try await api.registerStore(name: name, nameAr: nameAr, phone: phone)
+            let response = try await api.registerStore(name: name, nameAr: nameAr, phone: phone, code: code)
             
             // Save token and profile
             keychain.saveToken(response.token)
@@ -139,13 +139,13 @@ final class AuthManager: ObservableObject {
     // MARK: - Customer Authentication
     
     /// Register a new customer with the backend
-    func registerCustomer(name: String, nameAr: String?, phone: String) async throws {
+    func registerCustomer(name: String, nameAr: String?, phone: String, code: String) async throws {
         isLoading = true
         error = nil
         defer { isLoading = false }
         
         do {
-            let response = try await api.registerCustomer(name: name, nameAr: nameAr, phone: phone)
+            let response = try await api.registerCustomer(name: name, nameAr: nameAr, phone: phone, code: code)
             
             // Save token and profile
             keychain.saveToken(response.token)
