@@ -23,8 +23,8 @@ openai==1.12.0
 # Firebase (push notifications + file storage)
 firebase-admin==6.4.0
 
-# HTTP client (Unifonic SMS)
-httpx==0.26.0
+# SMS OTP (Twilio Verify)
+twilio==9.10.2
 
 # Rate limiting
 slowapi==0.1.9

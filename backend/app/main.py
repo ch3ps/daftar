@@ -242,15 +242,9 @@ async def login_store(request: Request, data: LoginRequest, db: AsyncSession = D
     if not store:
         raise HTTPException(status_code=401, detail="Phone not registered")
     
-    # Verify OTP
-    if settings.ENVIRONMENT == "production" or settings.UNIFONIC_APP_SID:
-        valid, message = verify_otp(phone, data.code)
-        if not valid:
-            raise HTTPException(status_code=401, detail=message)
-    else:
-        # Development mode - accept any 4+ digit code
-        if len(data.code) < 4:
-            raise HTTPException(status_code=401, detail="Invalid code")
+    valid, message = await verify_otp(phone, data.code)
+    if not valid:
+        raise HTTPException(status_code=401, detail=message)
     
     access_token = create_access_token(store.id, "store")
     return StoreAuthResponse(token=access_token, store=StoreResponse.model_validate(store))
@@ -299,14 +293,9 @@ async def login_customer(request: Request, data: LoginRequest, db: AsyncSession 
     if not customer:
         raise HTTPException(status_code=401, detail="Phone not registered")
     
-    # Verify OTP
-    if settings.ENVIRONMENT == "production" or settings.UNIFONIC_APP_SID:
-        valid, message = verify_otp(phone, data.code)
-        if not valid:
-            raise HTTPException(status_code=401, detail=message)
-    else:
-        if len(data.code) < 4:
-            raise HTTPException(status_code=401, detail="Invalid code")
+    valid, message = await verify_otp(phone, data.code)
+    if not valid:
+        raise HTTPException(status_code=401, detail=message)
     
     access_token = create_access_token(customer.id, "customer")
     return CustomerAuthResponse(token=access_token, customer=CustomerResponse.model_validate(customer))

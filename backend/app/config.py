@@ -27,9 +27,10 @@ class Settings(BaseSettings):
     FIREBASE_CREDENTIALS_JSON: Optional[str] = None
     FIREBASE_STORAGE_BUCKET: Optional[str] = None   # e.g. my-project.appspot.com
 
-    # SMS - Unifonic (GCC / Qatar)
-    UNIFONIC_APP_SID: Optional[str] = None
-    UNIFONIC_SENDER_ID: str = "DAFTAR"
+    # SMS OTP - Twilio Verify
+    TWILIO_ACCOUNT_SID: Optional[str] = None
+    TWILIO_AUTH_TOKEN: Optional[str] = None
+    TWILIO_VERIFY_SERVICE_SID: Optional[str] = None
 
     # OTP Settings
     OTP_LENGTH: int = 6

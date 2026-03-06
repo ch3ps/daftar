@@ -1,19 +1,34 @@
 """
-SMS Service using Unifonic (optimized for GCC region)
-Supports OTP verification for Qatar phone numbers
+SMS OTP service using Twilio Verify in production.
+Falls back to an in-memory OTP store for local development.
 """
+import asyncio
 import random
 import string
 from datetime import datetime, timedelta
 from typing import Optional, Tuple
-
-import httpx
 
 from app.config import settings
 
 
 # In-memory OTP storage (use Redis in production for multi-instance)
 _otp_store: dict[str, dict] = {}
+
+
+def _is_twilio_configured() -> bool:
+    return all(
+        [
+            settings.TWILIO_ACCOUNT_SID,
+            settings.TWILIO_AUTH_TOKEN,
+            settings.TWILIO_VERIFY_SERVICE_SID,
+        ]
+    )
+
+
+def _build_twilio_client():
+    from twilio.rest import Client
+
+    return Client(settings.TWILIO_ACCOUNT_SID, settings.TWILIO_AUTH_TOKEN)
 
 
 def generate_otp() -> str:
@@ -44,58 +59,38 @@ async def send_otp(phone: str) -> Tuple[bool, str]:
                 # Reset after lockout period
                 entry["attempts"] = 0
     
-    # Generate new OTP
-    code = generate_otp()
-    expires_at = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
-    
-    # Store OTP
-    _otp_store[phone] = {
-        "code": code,
-        "expires_at": expires_at,
-        "attempts": _otp_store.get(phone, {}).get("attempts", 0),
-        "created_at": datetime.utcnow()
-    }
-    
-    # Send SMS
-    if not settings.UNIFONIC_APP_SID:
-        # Development mode - just log
+    if not _is_twilio_configured():
+        # Local development fallback
+        code = generate_otp()
+        expires_at = datetime.utcnow() + timedelta(minutes=settings.OTP_EXPIRY_MINUTES)
+        _otp_store[phone] = {
+            "code": code,
+            "expires_at": expires_at,
+            "attempts": _otp_store.get(phone, {}).get("attempts", 0),
+            "created_at": datetime.utcnow(),
+        }
         print(f"[SMS DEV] OTP for {phone}: {code}")
         return True, "OTP sent (dev mode)"
-    
-    # Production - send via Unifonic
+
     try:
-        message_en = f"Your Daftar verification code is: {code}"
-        message_ar = f"رمز التحقق من دفتر: {code}"
-        message = f"{message_en}\n\n{message_ar}"
-        
-        async with httpx.AsyncClient(timeout=30.0) as client:
-            response = await client.post(
-                "https://el.cloud.unifonic.com/rest/SMS/messages",
-                data={
-                    "AppSid": settings.UNIFONIC_APP_SID,
-                    "Recipient": phone.replace("+", ""),  # Unifonic wants no +
-                    "Body": message,
-                    "SenderID": settings.UNIFONIC_SENDER_ID,
-                }
-            )
-            
-            if response.status_code == 200:
-                result = response.json()
-                if result.get("success") == "true":
-                    return True, "OTP sent successfully"
-                else:
-                    print(f"[SMS] Unifonic error: {result}")
-                    return False, "Failed to send SMS"
-            else:
-                print(f"[SMS] HTTP error {response.status_code}: {response.text}")
-                return False, "SMS service unavailable"
-                
+        client = _build_twilio_client()
+        verification = await asyncio.to_thread(
+            client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verifications.create,
+            to=phone,
+            channel="sms",
+        )
+
+        if verification.status in {"pending", "approved"}:
+            return True, "OTP sent successfully"
+
+        print(f"[SMS] Twilio verification status: {verification.status}")
+        return False, "Failed to send OTP"
     except Exception as e:
-        print(f"[SMS] Exception: {e}")
-        return False, "Failed to send SMS"
+        print(f"[SMS] Twilio exception: {e}")
+        return False, "Failed to send OTP"
 
 
-def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
+async def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
     """
     Verify an OTP code.
     
@@ -108,32 +103,48 @@ def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
     """
     phone = normalize_phone(phone)
     
-    if phone not in _otp_store:
-        return False, "No OTP requested for this number"
-    
-    entry = _otp_store[phone]
-    
-    # Check expiry
-    if datetime.utcnow() > entry["expires_at"]:
-        del _otp_store[phone]
-        return False, "OTP has expired. Please request a new one."
-    
-    # Increment attempts
-    entry["attempts"] = entry.get("attempts", 0) + 1
-    
-    # Check max attempts
-    if entry["attempts"] > settings.OTP_MAX_ATTEMPTS:
-        entry["lockout_until"] = datetime.utcnow() + timedelta(minutes=15)
-        return False, "Too many failed attempts. Please wait 15 minutes."
-    
-    # Verify code
-    if entry["code"] == code:
-        # Success - remove OTP
-        del _otp_store[phone]
-        return True, "OTP verified"
-    else:
+    if not _is_twilio_configured():
+        if phone not in _otp_store:
+            return False, "No OTP requested for this number"
+
+        entry = _otp_store[phone]
+
+        # Check expiry
+        if datetime.utcnow() > entry["expires_at"]:
+            del _otp_store[phone]
+            return False, "OTP has expired. Please request a new one."
+
+        # Increment attempts
+        entry["attempts"] = entry.get("attempts", 0) + 1
+
+        # Check max attempts
+        if entry["attempts"] > settings.OTP_MAX_ATTEMPTS:
+            entry["lockout_until"] = datetime.utcnow() + timedelta(minutes=15)
+            return False, "Too many failed attempts. Please wait 15 minutes."
+
+        # Verify code
+        if entry["code"] == code:
+            del _otp_store[phone]
+            return True, "OTP verified"
+
         remaining = settings.OTP_MAX_ATTEMPTS - entry["attempts"]
         return False, f"Invalid code. {remaining} attempts remaining."
+
+    try:
+        client = _build_twilio_client()
+        check = await asyncio.to_thread(
+            client.verify.v2.services(settings.TWILIO_VERIFY_SERVICE_SID).verification_checks.create,
+            to=phone,
+            code=code,
+        )
+
+        if check.status == "approved":
+            return True, "OTP verified"
+
+        return False, "Invalid or expired code"
+    except Exception as e:
+        print(f"[SMS] Twilio verify exception: {e}")
+        return False, "Failed to verify OTP"
 
 
 def normalize_phone(phone: str) -> str:
