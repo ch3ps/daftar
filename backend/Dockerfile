@@ -25,8 +25,5 @@ COPY . .
 # Expose default port (Railway injects PORT at runtime)
 EXPOSE 8000
 
-# Run startup sequence:
-# 1) write Firebase credentials file when provided
-# 2) start API server on Railway PORT
-# NOTE: Run migrations as a separate one-off command on deploy.
-CMD ["/bin/sh", "-c", "if [ -n \"$FIREBASE_CREDENTIALS_JSON\" ]; then echo \"$FIREBASE_CREDENTIALS_JSON\" > /app/firebase-credentials.json; fi && uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]
+# Start API server on Railway PORT
+CMD ["/bin/sh", "-c", "uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000}"]

@@ -24,6 +24,7 @@ class Settings(BaseSettings):
 
     # Firebase (push notifications + file storage)
     FIREBASE_CREDENTIALS_PATH: Optional[str] = None
+    FIREBASE_CREDENTIALS_JSON: Optional[str] = None
     FIREBASE_STORAGE_BUCKET: Optional[str] = None   # e.g. my-project.appspot.com
 
     # SMS - Unifonic (GCC / Qatar)

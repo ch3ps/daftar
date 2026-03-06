@@ -3,14 +3,15 @@ File storage service - Firebase Storage or local fallback
 """
 import os
 import uuid
-from datetime import datetime, timedelta
+import json
+from datetime import datetime
 
 from app.config import settings
 
 
 def _get_firebase_bucket():
     """Get Firebase Storage bucket - lazy init"""
-    if not settings.FIREBASE_CREDENTIALS_PATH:
+    if not settings.FIREBASE_CREDENTIALS_PATH and not settings.FIREBASE_CREDENTIALS_JSON:
         return None
     try:
         import firebase_admin
@@ -21,10 +22,20 @@ def _get_firebase_bucket():
             firebase_admin.get_app()
         except ValueError:
             from firebase_admin import credentials
-            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-            firebase_admin.initialize_app(cred, {
-                "storageBucket": settings.FIREBASE_STORAGE_BUCKET
-            })
+            if settings.FIREBASE_CREDENTIALS_JSON:
+                cred_info = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
+                cred = credentials.Certificate(cred_info)
+            else:
+                cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+
+            init_options = {}
+            if settings.FIREBASE_STORAGE_BUCKET:
+                init_options["storageBucket"] = settings.FIREBASE_STORAGE_BUCKET
+
+            if init_options:
+                firebase_admin.initialize_app(cred, init_options)
+            else:
+                firebase_admin.initialize_app(cred)
 
         return fb_storage.bucket()
     except Exception as e:

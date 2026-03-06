@@ -15,15 +15,27 @@ def _init_firebase():
     if _firebase_app is not None:
         return True
         
-    if not settings.FIREBASE_CREDENTIALS_PATH:
+    if not settings.FIREBASE_CREDENTIALS_PATH and not settings.FIREBASE_CREDENTIALS_JSON:
         return False
     
     try:
         import firebase_admin
         from firebase_admin import credentials
         
-        cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
-        _firebase_app = firebase_admin.initialize_app(cred)
+        if settings.FIREBASE_CREDENTIALS_JSON:
+            cred_info = json.loads(settings.FIREBASE_CREDENTIALS_JSON)
+            cred = credentials.Certificate(cred_info)
+        else:
+            cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS_PATH)
+
+        init_options = {}
+        if settings.FIREBASE_STORAGE_BUCKET:
+            init_options["storageBucket"] = settings.FIREBASE_STORAGE_BUCKET
+
+        if init_options:
+            _firebase_app = firebase_admin.initialize_app(cred, init_options)
+        else:
+            _firebase_app = firebase_admin.initialize_app(cred)
         return True
     except Exception as e:
         print(f"[PUSH] Firebase init error: {e}")
