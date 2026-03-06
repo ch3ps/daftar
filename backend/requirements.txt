@@ -19,6 +19,7 @@ passlib[bcrypt]==1.7.4
 
 # OpenAI (OCR / handwriting)
 openai==1.12.0
+httpx==0.26.0
 
 # Firebase (push notifications + file storage)
 firebase-admin==6.4.0
