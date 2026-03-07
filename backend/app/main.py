@@ -954,7 +954,7 @@ async def terms_of_service():
 async def seed_demo_data(db: AsyncSession = Depends(get_db)):
     """Seed demo data for testing"""
     if settings.ENVIRONMENT == "production" and settings.OTP_ENABLED:
-        raise HTTPException(status_code=403, detail="Not available in production")
+        raise HTTPException(status_code=403, detail="Not available in production – set OTP_ENABLED=false to unlock")
     
     import uuid
     

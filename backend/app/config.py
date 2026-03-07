@@ -33,7 +33,7 @@ class Settings(BaseSettings):
     TWILIO_VERIFY_SERVICE_SID: Optional[str] = None
 
     # OTP Settings
-    OTP_ENABLED: bool = True
+    OTP_ENABLED: bool = False
     OTP_LENGTH: int = 6
     OTP_EXPIRY_MINUTES: int = 5
     OTP_MAX_ATTEMPTS: int = 3
