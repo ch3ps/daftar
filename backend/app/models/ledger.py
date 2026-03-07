@@ -119,7 +119,10 @@ class Bill(Base):
     store_id = Column(GUID(), ForeignKey("stores.id"), nullable=False)
     customer_id = Column(GUID(), ForeignKey("customers.id"), nullable=False)
     total_amount = Column(Numeric(10, 2), nullable=False)
-    status = Column(SQLEnum(BillStatus), default=BillStatus.PENDING)
+    status = Column(
+        SQLEnum(BillStatus, values_callable=lambda e: [x.value for x in e]),
+        default=BillStatus.PENDING
+    )
     receipt_image_url = Column(Text)
     notes = Column(Text)
     created_at = Column(DateTime, default=datetime.utcnow)
