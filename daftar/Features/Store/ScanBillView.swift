@@ -71,7 +71,7 @@ struct ScanBillView: View {
             .onChange(of: viewModel.items) { oldValue, newValue in
                 // Keep amount display in sync when items change
                 if !newValue.isEmpty {
-                    let itemsTotal = newValue.reduce(Decimal.zero) { $0 + $1.totalPrice }
+                    let itemsTotal = newValue.reduce(FlexDecimal.zero) { $0 + $1.totalPrice }
                     viewModel.amountString = "\(itemsTotal)"
                 }
             }
@@ -533,11 +533,11 @@ final class ScanBillViewModel: ObservableObject {
         UserDefaults.standard.bool(forKey: "is_demo_mode")
     }
     
-    var amount: Decimal {
-        Decimal(string: amountString) ?? 0
+    var amount: FlexDecimal {
+        FlexDecimal(string: amountString)
     }
     
-    var total: Decimal {
+    var total: FlexDecimal {
         if items.isEmpty {
             return amount
         }
@@ -639,7 +639,7 @@ struct DetailedBillEntryView: View {
                     Button(appState.localized("Save", arabic: "حفظ")) {
                         // Sync the amount string to reflect items total
                         if !viewModel.items.isEmpty {
-                            let itemsTotal = viewModel.items.reduce(Decimal.zero) { $0 + $1.totalPrice }
+                            let itemsTotal = viewModel.items.reduce(FlexDecimal.zero) { $0 + $1.totalPrice }
                             viewModel.amountString = "\(itemsTotal)"
                         }
                         dismiss()
@@ -901,9 +901,9 @@ struct BillItemRow: View {
 struct QuickItem: Identifiable {
     let id = UUID()
     var name: String
-    var quantity: Decimal
-    var unitPrice: Decimal
-    var totalPrice: Decimal { quantity * unitPrice }
+    var quantity: FlexDecimal
+    var unitPrice: FlexDecimal
+    var totalPrice: FlexDecimal { quantity * unitPrice }
 }
 
 // MARK: - Add Item Sheet
@@ -998,10 +998,8 @@ struct AddItemSheet: View {
     }
     
     private func addItem() {
-        guard let priceValue = Decimal(string: price),
-              let quantityValue = Decimal(string: quantity) else {
-            return
-        }
+        let priceValue = FlexDecimal(string: price)
+        let quantityValue = FlexDecimal(string: quantity)
         
         onAdd(QuickItem(
             name: name,

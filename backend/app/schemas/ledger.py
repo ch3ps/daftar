@@ -75,7 +75,7 @@ class ProductResponse(BaseModel):
     description: Optional[str] = None
     image_url: Optional[str] = None
     category: Optional[str] = None
-    default_price: Optional[Decimal] = None
+    default_price: Optional[float] = None
     
     class Config:
         from_attributes = True
@@ -97,9 +97,9 @@ class BillItemResponse(BaseModel):
     name: str
     name_ar: Optional[str] = None
     image_url: Optional[str] = None
-    quantity: Decimal
-    unit_price: Decimal
-    total_price: Decimal
+    quantity: float
+    unit_price: float
+    total_price: float
     product: Optional[ProductResponse] = None
     
     class Config:
@@ -126,7 +126,7 @@ class BillResponse(BaseModel):
     store_id: UUID
     customer_id: UUID
     items: List[BillItemResponse]
-    total_amount: Decimal
+    total_amount: float
     status: str
     receipt_image_url: Optional[str] = None
     notes: Optional[str] = None
@@ -144,7 +144,7 @@ class BillResponse(BaseModel):
 class LedgerEntryResponse(BaseModel):
     store_id: UUID
     customer_id: UUID
-    total_owed: Decimal
+    total_owed: float
     last_activity_at: datetime
     customer: Optional[CustomerResponse] = None
     
@@ -157,7 +157,7 @@ class LedgerEntryResponse(BaseModel):
 class CustomerLedgerResponse(BaseModel):
     store_id: UUID
     customer_id: UUID
-    total_owed: Decimal
+    total_owed: float
     last_activity_at: datetime
     store: Optional[StoreResponse] = None
     
@@ -170,9 +170,9 @@ class CustomerLedgerResponse(BaseModel):
 class OCRItemResponse(BaseModel):
     name: str
     name_ar: Optional[str] = None
-    quantity: Decimal
-    unit_price: Decimal
-    total_price: Decimal
+    quantity: float
+    unit_price: float
+    total_price: float
     matched_product_id: Optional[UUID] = None
     matched_product: Optional[ProductResponse] = None
 
@@ -181,7 +181,7 @@ class OCRResponse(BaseModel):
     store_name: Optional[str] = None
     store_name_ar: Optional[str] = None
     items: List[OCRItemResponse]
-    total: Decimal
+    total: float
     confidence: float
 
 
@@ -228,6 +228,6 @@ class HandwritingRequest(BaseModel):
 
 class HandwritingResponse(BaseModel):
     customer_name: Optional[str] = None
-    amount: Optional[Decimal] = None
+    amount: Optional[float] = None
     raw_text: Optional[str] = None
     confidence: float

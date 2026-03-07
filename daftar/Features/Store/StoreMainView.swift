@@ -493,7 +493,7 @@ struct StoreMainView: View {
     }
     
     private var canSave: Bool {
-        selectedCustomer != nil && (Decimal(string: amountString) ?? 0) > 0
+        selectedCustomer != nil && (FlexDecimal(string: amountString)) > 0
     }
     
     // MARK: - Success View
@@ -553,9 +553,9 @@ struct StoreMainView: View {
     // MARK: - Actions
     
     private func saveBillAndSendWhatsApp() {
+        let amount = FlexDecimal(string: amountString)
         guard let customer = selectedCustomer,
               let storeId = authManager.storeProfile?.id,
-              let amount = Decimal(string: amountString),
               amount > 0 else { return }
         
         isSaving = true
@@ -608,9 +608,9 @@ struct StoreMainView: View {
     }
     
     private func saveBillOnly() {
+        let amount = FlexDecimal(string: amountString)
         guard let customer = selectedCustomer,
               let storeId = authManager.storeProfile?.id,
-              let amount = Decimal(string: amountString),
               amount > 0 else { return }
         
         isSaving = true
@@ -657,7 +657,7 @@ struct StoreMainView: View {
         }
     }
     
-    private func sendWhatsApp(amount: Decimal, customer: LedgerEntry) {
+    private func sendWhatsApp(amount: FlexDecimal, customer: LedgerEntry) {
         let storeName = authManager.storeProfile?.displayName ?? "Store"
         let formattedAmount = amount.formatted(.number.precision(.fractionLength(2)))
         
@@ -1172,7 +1172,7 @@ struct HandwritingResultView: View {
 final class StoreViewModel: ObservableObject {
     @Published var customers: [LedgerEntry] = []
     @Published var overdueCustomers: [LedgerEntry] = []
-    @Published var totalOwed: Decimal = 0
+    @Published var totalOwed: FlexDecimal = 0
     @Published var isLoading = false
     @Published var error: String?
     

@@ -112,17 +112,23 @@ final class APIClient {
             let container = try decoder.singleValueContainer()
             let dateString = try container.decode(String.self)
             
-            // Try ISO8601 with fractional seconds first
-            let formatter = ISO8601DateFormatter()
-            formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
-            if let date = formatter.date(from: dateString) {
-                return date
-            }
+            let iso = ISO8601DateFormatter()
             
-            // Try without fractional seconds
-            formatter.formatOptions = [.withInternetDateTime]
-            if let date = formatter.date(from: dateString) {
-                return date
+            // Full ISO 8601 with fractional seconds
+            iso.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
+            if let date = iso.date(from: dateString) { return date }
+            
+            // ISO 8601 without fractional seconds
+            iso.formatOptions = [.withInternetDateTime]
+            if let date = iso.date(from: dateString) { return date }
+            
+            // Server may omit timezone (e.g. "2026-03-07T20:53:23.511832")
+            let df = DateFormatter()
+            df.locale = Locale(identifier: "en_US_POSIX")
+            df.timeZone = TimeZone(identifier: "UTC")
+            for fmt in ["yyyy-MM-dd'T'HH:mm:ss.SSSSSS", "yyyy-MM-dd'T'HH:mm:ss"] {
+                df.dateFormat = fmt
+                if let date = df.date(from: dateString) { return date }
             }
             
             throw DecodingError.dataCorruptedError(in: container, debugDescription: "Invalid date: \(dateString)")
@@ -320,22 +326,22 @@ final class APIClient {
     struct BillItemBody: Codable {
         let name: String
         let name_ar: String?
-        let quantity: Decimal
-        let unit_price: Decimal
-        let total_price: Decimal
+        let quantity: FlexDecimal
+        let unit_price: FlexDecimal
+        let total_price: FlexDecimal
         let product_id: UUID?
     }
     
     struct CreateBillBody: Codable {
         let customer_id: UUID
         let items: [BillItemBody]
-        let total: Decimal
+        let total: FlexDecimal
         let notes: String?
         let receipt_image_url: String?
     }
     
     /// Create a bill with items
-    func createBill(customerId: UUID, items: [BillItem], total: Decimal, notes: String? = nil) async throws -> Bill {
+    func createBill(customerId: UUID, items: [BillItem], total: FlexDecimal, notes: String? = nil) async throws -> Bill {
         let itemBodies = items.map { item in
             BillItemBody(
                 name: item.name,
@@ -357,7 +363,7 @@ final class APIClient {
     }
     
     /// Create a "quick bill" with just a total amount (no items) - for baqalas that don't itemize
-    func createQuickBill(customerId: UUID, total: Decimal, notes: String? = nil) async throws -> Bill {
+    func createQuickBill(customerId: UUID, total: FlexDecimal, notes: String? = nil) async throws -> Bill {
         // Create a single "Purchase" item with the total
         let singleItem = BillItemBody(
             name: "Purchase",
@@ -378,7 +384,7 @@ final class APIClient {
     }
     
     /// Create a bill from OCR items
-    func createBill(customerId: UUID, items: [OCRItem], total: Decimal) async throws -> Bill {
+    func createBill(customerId: UUID, items: [OCRItem], total: FlexDecimal) async throws -> Bill {
         let itemBodies = items.map { item in
             BillItemBody(
                 name: item.name,
@@ -461,7 +467,7 @@ final class APIClient {
     
     struct HandwritingResult: Codable {
         let customerName: String?
-        let amount: Decimal?
+        let amount: FlexDecimal?
         let rawText: String?
         let confidence: Double
         

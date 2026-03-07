@@ -7,6 +7,55 @@
 
 import Foundation
 
+// Decimal that decodes from both JSON numbers and strings (e.g. "150.00").
+// Drop-in replacement for Decimal in Codable models.
+struct FlexDecimal: Codable, Hashable, CustomStringConvertible {
+    var value: Decimal
+
+    init(_ v: Decimal)           { value = v }
+    init(_ v: Int)               { value = Decimal(v) }
+    init(_ v: Double)            { value = Decimal(v) }
+    init(string s: String)       { value = Decimal(string: s) ?? 0 }
+    init(integerLiteral v: Int)  { value = Decimal(v) }
+    init(floatLiteral v: Double) { value = Decimal(v) }
+
+    init(from decoder: Decoder) throws {
+        let c = try decoder.singleValueContainer()
+        if let d = try? c.decode(Decimal.self)                            { value = d }
+        else if let s = try? c.decode(String.self), let d = Decimal(string: s) { value = d }
+        else { throw DecodingError.typeMismatch(Decimal.self,
+               .init(codingPath: decoder.codingPath, debugDescription: "Expected number or numeric string")) }
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var c = encoder.singleValueContainer(); try c.encode(value)
+    }
+
+    var description: String { "\(value)" }
+
+    func formatted() -> String { value.formatted() }
+    func formatted<S: FormatStyle>(_ style: S) -> S.FormatOutput where S.FormatInput == Decimal { value.formatted(style) }
+}
+
+extension FlexDecimal: Equatable {}
+extension FlexDecimal: ExpressibleByIntegerLiteral {}
+extension FlexDecimal: ExpressibleByFloatLiteral {}
+extension FlexDecimal: Comparable {
+    static func < (lhs: FlexDecimal, rhs: FlexDecimal) -> Bool { lhs.value < rhs.value }
+}
+extension FlexDecimal: AdditiveArithmetic {
+    static var zero: FlexDecimal { FlexDecimal(0) }
+    static func + (lhs: FlexDecimal, rhs: FlexDecimal) -> FlexDecimal { FlexDecimal(lhs.value + rhs.value) }
+    static func - (lhs: FlexDecimal, rhs: FlexDecimal) -> FlexDecimal { FlexDecimal(lhs.value - rhs.value) }
+}
+extension FlexDecimal {
+    static func * (lhs: FlexDecimal, rhs: FlexDecimal) -> FlexDecimal { FlexDecimal(lhs.value * rhs.value) }
+    static func / (lhs: FlexDecimal, rhs: FlexDecimal) -> FlexDecimal {
+        guard rhs.value != 0 else { return .zero }
+        return FlexDecimal(lhs.value / rhs.value)
+    }
+}
+
 // MARK: - User Type
 enum UserType: String, Codable {
     case store = "store"
@@ -44,7 +93,7 @@ struct Product: Codable, Identifiable, Equatable {
     var description: String?
     var imageUrl: String?
     var category: String?
-    var defaultPrice: Decimal?
+    var defaultPrice: FlexDecimal?
     
     enum CodingKeys: String, CodingKey {
         case id, name
@@ -63,9 +112,9 @@ struct BillItem: Codable, Identifiable, Equatable {
     var name: String
     var nameAr: String?
     var imageUrl: String?
-    var quantity: Decimal
-    var unitPrice: Decimal
-    var totalPrice: Decimal
+    var quantity: FlexDecimal
+    var unitPrice: FlexDecimal
+    var totalPrice: FlexDecimal
     
     // Populated from product lookup
     var product: Product?
@@ -93,7 +142,7 @@ struct Bill: Codable, Identifiable, Equatable {
     let storeId: UUID
     let customerId: UUID
     var items: [BillItem]
-    var totalAmount: Decimal
+    var totalAmount: FlexDecimal
     var status: BillStatus
     var receiptImageUrl: String?
     var notes: String?
@@ -169,7 +218,7 @@ struct LedgerEntry: Codable, Identifiable, Equatable {
     var id: UUID { customerId }
     let storeId: UUID
     let customerId: UUID
-    var totalOwed: Decimal
+    var totalOwed: FlexDecimal
     var lastActivityAt: Date
     var customer: CustomerProfile?
     
@@ -187,7 +236,7 @@ struct CustomerLedger: Codable, Identifiable, Equatable {
     var id: UUID { storeId }
     let storeId: UUID
     let customerId: UUID
-    var totalOwed: Decimal
+    var totalOwed: FlexDecimal
     var lastActivityAt: Date
     var store: StoreProfile?
     
@@ -205,7 +254,7 @@ struct OCRResult: Codable {
     var storeName: String?
     var storeNameAr: String?
     var items: [OCRItem]
-    var total: Decimal
+    var total: FlexDecimal
     var confidence: Double
     
     enum CodingKeys: String, CodingKey {
@@ -219,9 +268,9 @@ struct OCRItem: Codable, Identifiable {
     let id = UUID()
     var name: String
     var nameAr: String?
-    var quantity: Decimal
-    var unitPrice: Decimal
-    var totalPrice: Decimal
+    var quantity: FlexDecimal
+    var unitPrice: FlexDecimal
+    var totalPrice: FlexDecimal
     var matchedProductId: UUID?
     var matchedProduct: Product?
     
@@ -273,7 +322,7 @@ struct Reminder: Codable, Identifiable {
     let customerId: UUID
     var type: ReminderType
     var daysInterval: Int?
-    var balanceThreshold: Decimal?
+    var balanceThreshold: FlexDecimal?
     var nextReminderDate: Date
     var isActive: Bool
     var customerName: String?
@@ -397,7 +446,7 @@ struct Payment: Codable, Identifiable {
     let id: UUID
     let storeId: UUID
     let customerId: UUID
-    let amount: Decimal
+    let amount: FlexDecimal
     var method: PaymentMethod
     var status: PaymentStatus
     let createdAt: Date
@@ -413,11 +462,11 @@ struct Payment: Codable, Identifiable {
 
 // MARK: - Analytics
 struct AnalyticsSummary {
-    let totalRevenue: Decimal
-    let totalOutstanding: Decimal
+    let totalRevenue: FlexDecimal
+    let totalOutstanding: FlexDecimal
     let totalCustomers: Int
     let totalBills: Int
-    let averageBillSize: Decimal
+    let averageBillSize: FlexDecimal
     let topCustomers: [TopCustomer]
     let revenueByDay: [DailyRevenue]
     let collectionRate: Double
@@ -426,14 +475,14 @@ struct AnalyticsSummary {
 struct TopCustomer: Identifiable {
     let id: UUID
     let name: String
-    let totalSpent: Decimal
+    let totalSpent: FlexDecimal
     let billCount: Int
 }
 
 struct DailyRevenue: Identifiable {
     var id: String { date }
     let date: String
-    let amount: Decimal
+    let amount: FlexDecimal
 }
 
 // MARK: - Store Directory (Discovery)
@@ -480,7 +529,7 @@ struct WhatsAppShare {
         openWhatsApp(phone: phone, message: message)
     }
     
-    static func shareStatement(customerName: String, totalOwed: Decimal, bills: [Bill], storeName: String, phone: String?) {
+    static func shareStatement(customerName: String, totalOwed: FlexDecimal, bills: [Bill], storeName: String, phone: String?) {
         let amount = totalOwed.formatted(.number.precision(.fractionLength(2)))
         let pendingBills = bills.filter { $0.status == .pending }
         let billSummary = pendingBills.prefix(5).map {
@@ -501,7 +550,7 @@ struct WhatsAppShare {
         openWhatsApp(phone: phone, message: message)
     }
     
-    static func shareReminder(customerName: String, totalOwed: Decimal, storeName: String, phone: String?) {
+    static func shareReminder(customerName: String, totalOwed: FlexDecimal, storeName: String, phone: String?) {
         let amount = totalOwed.formatted(.number.precision(.fractionLength(2)))
         
         let message = """
@@ -570,7 +619,7 @@ struct PDFExporter {
             y += 30
             
             // Summary
-            let totalOwed = customers.reduce(Decimal.zero) { $0 + $1.totalOwed }
+            let totalOwed = customers.reduce(FlexDecimal.zero) { $0 + $1.totalOwed }
             let summaryAttrs: [NSAttributedString.Key: Any] = [
                 .font: UIFont.systemFont(ofSize: 14, weight: .medium),
                 .foregroundColor: UIColor.label

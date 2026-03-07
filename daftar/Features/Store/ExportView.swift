@@ -53,7 +53,7 @@ struct ExportView: View {
                         Text(appState.localized("Total Outstanding", arabic: "إجمالي المستحق"))
                             .foregroundStyle(.secondary)
                         Spacer()
-                        Text("QR \(customers.reduce(Decimal.zero) { $0 + $1.totalOwed }.formatted(.number.precision(.fractionLength(2))))")
+                        Text("QR \(customers.reduce(FlexDecimal.zero) { $0 + $1.totalOwed }.formatted(.number.precision(.fractionLength(2))))")
                             .fontWeight(.semibold)
                     }
                 }

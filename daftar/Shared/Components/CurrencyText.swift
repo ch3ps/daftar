@@ -8,7 +8,7 @@
 import SwiftUI
 
 struct CurrencyText: View {
-    let amount: Decimal
+    let amount: FlexDecimal
     var currencyCode: String = "QAR"
     var showSign: Bool = false
     var size: Size = .medium
@@ -54,7 +54,7 @@ struct CurrencyText: View {
             formatter.currencySymbol = "QR "
         }
         
-        let value = amount as NSDecimalNumber
+        let value = amount.value as NSDecimalNumber
         var result = formatter.string(from: value) ?? "QR \(amount)"
         
         if showSign && amount > 0 {
@@ -67,7 +67,7 @@ struct CurrencyText: View {
 
 // MARK: - Convenience Initializers
 extension CurrencyText {
-    init(_ amount: Decimal) {
+    init(_ amount: FlexDecimal) {
         self.amount = amount
     }
     

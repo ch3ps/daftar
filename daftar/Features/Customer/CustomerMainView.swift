@@ -309,7 +309,7 @@ struct StoreRow: View {
 @MainActor
 final class CustomerViewModel: ObservableObject {
     @Published var stores: [CustomerLedger] = []
-    @Published var totalOwed: Decimal = 0
+    @Published var totalOwed: FlexDecimal = 0
     @Published var pendingCount = 0
     @Published var isLoading = false
     @Published var error: String?

@@ -181,7 +181,7 @@ final class DemoData {
     }
     
     /// Create a new bill
-    func createBill(storeId: UUID, customerId: UUID, items: [BillItem], total: Decimal, store: StoreProfile?) -> Bill {
+    func createBill(storeId: UUID, customerId: UUID, items: [BillItem], total: FlexDecimal, store: StoreProfile?) -> Bill {
         let bill = Bill(
             id: UUID(),
             storeId: storeId,
@@ -272,7 +272,7 @@ final class DemoData {
         return reminders.first { $0.storeId == storeId && $0.customerId == customerId }
     }
     
-    func setReminder(storeId: UUID, customerId: UUID, type: ReminderType, daysInterval: Int?, balanceThreshold: Decimal?, customerName: String?) -> Reminder {
+    func setReminder(storeId: UUID, customerId: UUID, type: ReminderType, daysInterval: Int?, balanceThreshold: FlexDecimal?, customerName: String?) -> Reminder {
         // Remove existing reminder for this pair
         reminders.removeAll { $0.storeId == storeId && $0.customerId == customerId }
         
@@ -362,9 +362,9 @@ final class DemoData {
         let customers = getCustomersForStore(storeId: storeId)
         let storeBills = bills.filter { $0.storeId == storeId }
         let paidBills = storeBills.filter { $0.status == .paid }
-        let totalRevenue = paidBills.reduce(Decimal.zero) { $0 + $1.totalAmount }
-        let totalOutstanding = customers.reduce(Decimal.zero) { $0 + $1.totalOwed }
-        let avgBill = storeBills.isEmpty ? Decimal.zero : storeBills.reduce(Decimal.zero) { $0 + $1.totalAmount } / Decimal(storeBills.count)
+        let totalRevenue = paidBills.reduce(FlexDecimal.zero) { $0 + $1.totalAmount }
+        let totalOutstanding = customers.reduce(FlexDecimal.zero) { $0 + $1.totalOwed }
+        let avgBill = storeBills.isEmpty ? FlexDecimal.zero : storeBills.reduce(FlexDecimal.zero) { $0 + $1.totalAmount } / FlexDecimal(storeBills.count)
         let collectionRate = storeBills.isEmpty ? 0.0 : Double(paidBills.count) / Double(storeBills.count) * 100.0
         
         let topCusts: [TopCustomer] = customers.prefix(5).map { entry in
@@ -372,7 +372,7 @@ final class DemoData {
             return TopCustomer(
                 id: entry.customerId,
                 name: entry.customer?.displayName ?? "Unknown",
-                totalSpent: custBills.reduce(Decimal.zero) { $0 + $1.totalAmount },
+                totalSpent: custBills.reduce(FlexDecimal.zero) { $0 + $1.totalAmount },
                 billCount: custBills.count
             )
         }.sorted { $0.totalSpent > $1.totalSpent }
@@ -383,16 +383,16 @@ final class DemoData {
             let date = calendar.date(byAdding: .day, value: -daysAgo, to: Date())!
             let dateStr = date.formatted(.dateTime.month(.abbreviated).day())
             // Mock: distribute revenue across days
-            let dayAmount = totalRevenue > 0 ? totalRevenue / 7 * Decimal(Double.random(in: 0.5...1.5)) : Decimal(Double.random(in: 50...500))
+            let dayAmount = totalRevenue > 0 ? totalRevenue / FlexDecimal(7) * FlexDecimal(Double.random(in: 0.5...1.5)) : FlexDecimal(Double.random(in: 50...500))
             return DailyRevenue(date: dateStr, amount: dayAmount)
         }
         
         return AnalyticsSummary(
-            totalRevenue: totalRevenue > 0 ? totalRevenue : Decimal(2450),
+            totalRevenue: totalRevenue > 0 ? totalRevenue : FlexDecimal(2450),
             totalOutstanding: totalOutstanding,
             totalCustomers: customers.count > 0 ? customers.count : 12,
             totalBills: storeBills.count > 0 ? storeBills.count : 47,
-            averageBillSize: avgBill > 0 ? avgBill : Decimal(52),
+            averageBillSize: avgBill > 0 ? avgBill : FlexDecimal(52),
             topCustomers: topCusts.isEmpty ? [
                 TopCustomer(id: UUID(), name: "Ahmed", totalSpent: 820, billCount: 15),
                 TopCustomer(id: UUID(), name: "Mohammed", totalSpent: 650, billCount: 12),
@@ -405,7 +405,7 @@ final class DemoData {
     
     // MARK: - Mock Payment
     
-    func processPayment(storeId: UUID, customerId: UUID, amount: Decimal, method: PaymentMethod) -> Payment {
+    func processPayment(storeId: UUID, customerId: UUID, amount: FlexDecimal, method: PaymentMethod) -> Payment {
         let payment = Payment(
             id: UUID(),
             storeId: storeId,

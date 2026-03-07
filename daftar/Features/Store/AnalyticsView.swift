@@ -92,7 +92,7 @@ struct AnalyticsView: View {
                     ForEach(analytics.revenueByDay) { day in
                         VStack(spacing: 6) {
                             // Bar
-                            let height = maxAmount > 0 ? CGFloat(truncating: (day.amount / maxAmount) as NSDecimalNumber) * 120 : 0
+                            let height = maxAmount > 0 ? CGFloat(truncating: (day.amount / maxAmount).value as NSDecimalNumber) * 120 : 0
                             RoundedRectangle(cornerRadius: 6)
                                 .fill(Color.accentColor)
                                 .frame(height: max(8, height))

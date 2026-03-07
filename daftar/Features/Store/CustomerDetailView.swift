@@ -585,7 +585,7 @@ struct ReminderSheet: View {
     }
     
     private func saveReminder() {
-        let threshold = Decimal(string: balanceThreshold)
+        let threshold: FlexDecimal? = balanceThreshold.isEmpty ? nil : FlexDecimal(string: balanceThreshold)
         _ = DemoData.shared.setReminder(
             storeId: storeId,
             customerId: customerId,
