@@ -53,9 +53,13 @@ async def send_otp(phone: str) -> Tuple[bool, str]:
     Returns:
         Tuple of (success: bool, message: str)
     """
-    # Normalize phone number
     phone = normalize_phone(phone)
-    
+
+    if not settings.OTP_ENABLED:
+        _otp_store[phone] = {"code": "000000", "expires_at": datetime.utcnow() + timedelta(hours=24), "attempts": 0, "created_at": datetime.utcnow()}
+        logger.info(f"[SMS] OTP disabled – skipping send for {phone}")
+        return True, "OTP disabled for testing"
+
     # Check rate limit (max attempts per phone)
     if phone in _otp_store:
         entry = _otp_store[phone]
@@ -120,7 +124,12 @@ async def verify_otp(phone: str, code: str) -> Tuple[bool, str]:
         Tuple of (valid: bool, message: str)
     """
     phone = normalize_phone(phone)
-    
+
+    if not settings.OTP_ENABLED:
+        logger.info(f"[SMS] OTP disabled – auto-approving for {phone}")
+        _otp_store.pop(phone, None)
+        return True, "OTP bypassed"
+
     if not _is_twilio_configured():
         if _is_production():
             return False, "OTP service is not configured on the server."

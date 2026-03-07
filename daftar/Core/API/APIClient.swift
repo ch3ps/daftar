@@ -8,6 +8,10 @@
 import Foundation
 import UIKit
 
+extension Notification.Name {
+    static let authSessionExpired = Notification.Name("authSessionExpired")
+}
+
 // MARK: - API Error
 enum APIError: LocalizedError {
     case invalidURL
@@ -171,6 +175,9 @@ final class APIClient {
         // Handle errors
         if !(200..<300 ~= httpResponse.statusCode) {
             if httpResponse.statusCode == 401 {
+                if authenticated {
+                    NotificationCenter.default.post(name: .authSessionExpired, object: nil)
+                }
                 throw APIError.unauthorized
             }
             
@@ -209,7 +216,7 @@ final class APIClient {
     
     // MARK: - Store Auth
     
-    func loginStore(phone: String, code: String) async throws -> StoreAuthResponse {
+    func loginStore(phone: String, code: String = "") async throws -> StoreAuthResponse {
         struct Body: Codable {
             let phone: String
             let code: String
@@ -217,7 +224,7 @@ final class APIClient {
         return try await request("POST", path: "/auth/store/login", body: Body(phone: phone, code: code), authenticated: false)
     }
     
-    func registerStore(name: String, nameAr: String?, phone: String, code: String) async throws -> StoreAuthResponse {
+    func registerStore(name: String, nameAr: String?, phone: String, code: String = "") async throws -> StoreAuthResponse {
         struct Body: Codable {
             let name: String
             let name_ar: String?
@@ -238,7 +245,7 @@ final class APIClient {
     
     // MARK: - Customer Auth
     
-    func loginCustomer(phone: String, code: String) async throws -> CustomerAuthResponse {
+    func loginCustomer(phone: String, code: String = "") async throws -> CustomerAuthResponse {
         struct Body: Codable {
             let phone: String
             let code: String
@@ -246,7 +253,7 @@ final class APIClient {
         return try await request("POST", path: "/auth/customer/login", body: Body(phone: phone, code: code), authenticated: false)
     }
     
-    func registerCustomer(name: String, nameAr: String?, phone: String, code: String) async throws -> CustomerAuthResponse {
+    func registerCustomer(name: String, nameAr: String?, phone: String, code: String = "") async throws -> CustomerAuthResponse {
         struct Body: Codable {
             let name: String
             let name_ar: String?

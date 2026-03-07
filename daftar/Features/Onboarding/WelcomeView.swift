@@ -2,133 +2,74 @@
 //  WelcomeView.swift
 //  daftar
 //
-//  Clean minimal welcome screen - choose Store or Customer
+//  Modern onboarding – choose Store or Customer, then sign in / register.
 //
 
 import SwiftUI
+
+// MARK: - Welcome Screen
 
 struct WelcomeView: View {
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var authManager: AuthManager
     @State private var selectedRole: UserType?
-    
+    @State private var logoAppeared = false
+    @State private var cardsAppeared = false
+
+    private let gradient = LinearGradient(
+        colors: [Color(hex: "667EEA"), Color(hex: "5A67D8")],
+        startPoint: .topLeading,
+        endPoint: .bottomTrailing
+    )
+
     var body: some View {
         GeometryReader { geo in
-            VStack(spacing: 0) {
-                Spacer()
-                
-                // Logo & Title
-                VStack(spacing: 20) {
-                    // App icon style logo
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 28)
-                            .fill(Color.accentColor)
-                            .frame(width: 100, height: 100)
-                        
-                        Text("د")
-                            .font(.system(size: 52, weight: .bold, design: .serif))
-                            .foregroundStyle(.white)
-                    }
-                    .shadow(color: Color.accentColor.opacity(0.3), radius: 16, y: 8)
-                    
-                    VStack(spacing: 8) {
-                        Text("Daftar")
-                            .font(.system(size: 36, weight: .bold, design: .rounded))
-                        
-                        Text(appState.localized(
-                            "Your Digital Ledger",
-                            arabic: "دفتر حسابك الرقمي"
-                        ))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    }
-                }
-                
-                Spacer()
-                
-                // Role selection
-                VStack(spacing: 16) {
-                    Text(appState.localized("I am a...", arabic: "أنا..."))
-                        .font(.subheadline)
-                        .foregroundStyle(.secondary)
-                    
-                    // Store button
-                    Button {
-                        selectedRole = .store
-                    } label: {
-                        RoleCard(
+            ZStack {
+                // Background
+                Color(.systemBackground).ignoresSafeArea()
+
+                VStack(spacing: 0) {
+                    // ── Hero ──────────────────────────────────
+                    heroSection(geo: geo)
+
+                    // ── Cards ─────────────────────────────────
+                    VStack(spacing: 14) {
+                        roleButton(.store,
                             icon: "storefront.fill",
                             title: appState.localized("Store Owner", arabic: "صاحب متجر"),
-                            subtitle: appState.localized(
-                                "Track what customers owe you",
-                                arabic: "تتبع ما يدين به العملاء"
-                            ),
-                            isLoading: false,
-                            color: .accentColor
+                            subtitle: appState.localized("Track what customers owe you", arabic: "تتبع ما يدين به العملاء"),
+                            tint: Color(hex: "667EEA")
                         )
-                    }
-                    
-                    // Customer button
-                    Button {
-                        selectedRole = .customer
-                    } label: {
-                        RoleCard(
+                        roleButton(.customer,
                             icon: "person.fill",
                             title: appState.localized("Customer", arabic: "عميل"),
-                            subtitle: appState.localized(
-                                "See what you owe at stores",
-                                arabic: "شاهد ما تدين به للمتاجر"
-                            ),
-                            isLoading: false,
-                            color: .green
+                            subtitle: appState.localized("See what you owe at stores", arabic: "شاهد ما تدين به للمتاجر"),
+                            tint: .green
                         )
                     }
-                    
-                    Text(appState.localized(
-                        "Sign in or create an account with your phone number.",
-                        arabic: "سجّل الدخول أو أنشئ حساباً برقم هاتفك."
-                    ))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .multilineTextAlignment(.center)
-                    .padding(.top, 4)
-                    
-                    // Error message
-                    if let error = authManager.error {
-                        Text(error)
-                            .font(.caption)
-                            .foregroundStyle(.red)
-                            .multilineTextAlignment(.center)
-                            .padding(.top, 8)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 32)
+                    .opacity(cardsAppeared ? 1 : 0)
+                    .offset(y: cardsAppeared ? 0 : 30)
+
+                    Spacer(minLength: 16)
+
+                    // ── Footer ────────────────────────────────
+                    VStack(spacing: 14) {
+                        if let error = authManager.error {
+                            Text(error)
+                                .font(.caption)
+                                .foregroundStyle(.red)
+                                .multilineTextAlignment(.center)
+                                .transition(.opacity)
+                        }
+
+                        languageToggle
                     }
+                    .padding(.horizontal, 24)
+                    .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 16 : 28)
                 }
-                .padding(.horizontal, 24)
-                
-                Spacer()
-                    .frame(height: 40)
-                
-                // Language toggle
-                Button {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        appState.language = appState.language == .arabic ? .english : .arabic
-                    }
-                } label: {
-                    HStack(spacing: 6) {
-                        Image(systemName: "globe")
-                            .font(.caption)
-                        Text(appState.language == .arabic ? "English" : "العربية")
-                            .font(.subheadline)
-                    }
-                    .foregroundStyle(.secondary)
-                    .padding(.vertical, 10)
-                    .padding(.horizontal, 16)
-                    .background(Color(.secondarySystemBackground))
-                    .clipShape(Capsule())
-                }
-                .padding(.bottom, geo.safeAreaInsets.bottom > 0 ? 20 : 32)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .background(Color(.systemBackground))
         }
         .environment(\.layoutDirection, appState.layoutDirection)
         .sheet(item: $selectedRole) { role in
@@ -137,67 +78,167 @@ struct WelcomeView: View {
                 .environmentObject(authManager)
                 .presentationDetents([.large])
                 .presentationDragIndicator(.visible)
+                .presentationCornerRadius(28)
+        }
+        .onAppear {
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.1)) {
+                logoAppeared = true
+            }
+            withAnimation(.spring(response: 0.7, dampingFraction: 0.8).delay(0.35)) {
+                cardsAppeared = true
+            }
         }
     }
-}
 
-// MARK: - Role Card
-struct RoleCard: View {
-    let icon: String
-    let title: String
-    let subtitle: String
-    let isLoading: Bool
-    let color: Color
-    
-    var body: some View {
-        HStack(spacing: 16) {
-            // Icon
-            ZStack {
-                Circle()
-                    .fill(color.opacity(0.1))
-                    .frame(width: 52, height: 52)
-                
-                if isLoading {
-                    ProgressView()
-                        .tint(color)
-                } else {
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .foregroundStyle(color)
+    // MARK: - Hero
+
+    @ViewBuilder
+    private func heroSection(geo: GeometryProxy) -> some View {
+        ZStack {
+            gradient
+                .ignoresSafeArea(edges: .top)
+
+            VStack(spacing: 16) {
+                Spacer(minLength: geo.safeAreaInsets.top + 24)
+
+                ZStack {
+                    Circle()
+                        .fill(.white.opacity(0.15))
+                        .frame(width: 108, height: 108)
+                        .blur(radius: 1)
+
+                    Text("د")
+                        .font(.system(size: 54, weight: .bold, design: .serif))
+                        .foregroundStyle(.white)
                 }
+                .scaleEffect(logoAppeared ? 1 : 0.5)
+                .opacity(logoAppeared ? 1 : 0)
+
+                VStack(spacing: 6) {
+                    Text("Daftar")
+                        .font(.system(size: 34, weight: .bold, design: .rounded))
+                        .foregroundStyle(.white)
+
+                    Text(appState.localized("Your Digital Ledger", arabic: "دفتر حسابك الرقمي"))
+                        .font(.subheadline.weight(.medium))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+                .opacity(logoAppeared ? 1 : 0)
+
+                // Feature pills
+                HStack(spacing: 10) {
+                    featurePill(icon: "doc.text.magnifyingglass", text: appState.localized("Scan", arabic: "مسح"))
+                    featurePill(icon: "chart.line.uptrend.xyaxis", text: appState.localized("Track", arabic: "تتبع"))
+                    featurePill(icon: "bell.fill", text: appState.localized("Notify", arabic: "تنبيه"))
+                }
+                .padding(.top, 4)
+                .opacity(logoAppeared ? 1 : 0)
+
+                Spacer(minLength: 20)
             }
-            
-            // Text
-            VStack(alignment: .leading, spacing: 4) {
-                Text(title)
-                    .font(.headline)
-                    .foregroundStyle(.primary)
-                
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            
-            Spacer()
-            
-            Image(systemName: "chevron.right")
-                .font(.subheadline)
-                .foregroundStyle(.tertiary)
         }
-        .padding()
-        .background(Color(.secondarySystemBackground))
-        .clipShape(RoundedRectangle(cornerRadius: 16))
+        .frame(height: geo.size.height * 0.46)
+        .clipShape(RoundedCornerShape(radius: 36, corners: [.bottomLeft, .bottomRight]))
+    }
+
+    private func featurePill(icon: String, text: String) -> some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: 11, weight: .semibold))
+            Text(text)
+                .font(.system(size: 12, weight: .semibold))
+        }
+        .foregroundStyle(.white)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(.white.opacity(0.2))
+        .clipShape(Capsule())
+    }
+
+    // MARK: - Role Button
+
+    private func roleButton(_ role: UserType, icon: String, title: String, subtitle: String, tint: Color) -> some View {
+        Button { selectedRole = role } label: {
+            HStack(spacing: 16) {
+                ZStack {
+                    RoundedRectangle(cornerRadius: 14)
+                        .fill(tint.opacity(0.12))
+                        .frame(width: 52, height: 52)
+
+                    Image(systemName: icon)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(tint)
+                }
+
+                VStack(alignment: .leading, spacing: 3) {
+                    Text(title)
+                        .font(.body.weight(.semibold))
+                        .foregroundStyle(.primary)
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Image(systemName: "chevron.right")
+                    .font(.subheadline.weight(.medium))
+                    .foregroundStyle(.tertiary)
+            }
+            .padding(16)
+            .background(Color(.secondarySystemBackground))
+            .clipShape(RoundedRectangle(cornerRadius: 18))
+        }
+        .buttonStyle(.plain)
+    }
+
+    // MARK: - Language Toggle
+
+    private var languageToggle: some View {
+        Button {
+            withAnimation(.easeInOut(duration: 0.2)) {
+                appState.language = appState.language == .arabic ? .english : .arabic
+            }
+        } label: {
+            HStack(spacing: 6) {
+                Image(systemName: "globe")
+                    .font(.system(size: 13))
+                Text(appState.language == .arabic ? "English" : "العربية")
+                    .font(.subheadline.weight(.medium))
+            }
+            .foregroundStyle(.secondary)
+            .padding(.vertical, 10)
+            .padding(.horizontal, 18)
+            .background(Color(.tertiarySystemBackground))
+            .clipShape(Capsule())
+        }
     }
 }
 
-extension UserType: Identifiable {
+// MARK: - Custom Corner Shape
+
+private struct RoundedCornerShape: Shape {
+    var radius: CGFloat
+    var corners: UIRectCorner
+
+    func path(in rect: CGRect) -> Path {
+        let path = UIBezierPath(
+            roundedRect: rect,
+            byRoundingCorners: corners,
+            cornerRadii: CGSize(width: radius, height: radius)
+        )
+        return Path(path.cgPath)
+    }
+}
+
+// MARK: - Auth Sheet
+
+private enum AuthMode: String, CaseIterable, Identifiable {
+    case signIn, signUp
     var id: String { rawValue }
 }
 
-private enum AuthMode: String, CaseIterable, Identifiable {
-    case signIn
-    case signUp
-    
+extension UserType: Identifiable {
     var id: String { rawValue }
 }
 
@@ -205,242 +246,239 @@ private struct AuthSheetView: View {
     @Environment(\.dismiss) private var dismiss
     @EnvironmentObject var appState: AppState
     @EnvironmentObject var authManager: AuthManager
-    
+
     let role: UserType
-    
+
     @State private var mode: AuthMode = .signIn
     @State private var phone = ""
     @State private var name = ""
     @State private var nameAr = ""
-    @State private var code = ""
-    @State private var isSendingOTP = false
-    @State private var otpSent = false
-    @State private var infoMessage: String?
     @State private var localError: String?
-    
+    @FocusState private var focusedField: Field?
+
+    private enum Field: Hashable { case phone, name, nameAr }
+
+    private let accentGradient = LinearGradient(
+        colors: [Color(hex: "667EEA"), Color(hex: "5A67D8")],
+        startPoint: .leading,
+        endPoint: .trailing
+    )
+
     var body: some View {
         NavigationStack {
             ScrollView {
-                VStack(alignment: .leading, spacing: 20) {
-                    Picker("", selection: $mode) {
-                        Text(appState.localized("Sign In", arabic: "تسجيل الدخول"))
-                            .tag(AuthMode.signIn)
-                        Text(appState.localized("Create Account", arabic: "إنشاء حساب"))
-                            .tag(AuthMode.signUp)
-                    }
-                    .pickerStyle(.segmented)
-                    
-                    VStack(alignment: .leading, spacing: 8) {
+                VStack(spacing: 24) {
+                    // ── Mode Picker ──────────────────
+                    modeSelector
+
+                    // ── Header ───────────────────────
+                    VStack(alignment: .leading, spacing: 6) {
                         Text(roleTitle)
                             .font(.title2.weight(.bold))
                         Text(appState.localized(
-                            "Use your phone number and a one-time code.",
-                            arabic: "استخدم رقم هاتفك ورمز التحقق لمرة واحدة."
+                            "Enter your phone number to continue.",
+                            arabic: "أدخل رقم هاتفك للمتابعة."
                         ))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                     }
-                    
-                    if mode == .signUp {
-                        VStack(spacing: 12) {
-                            textField(
-                                title: appState.localized("Full Name", arabic: "الاسم الكامل"),
-                                text: $name
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                    // ── Fields ───────────────────────
+                    VStack(spacing: 16) {
+                        if mode == .signUp {
+                            styledField(
+                                icon: "person",
+                                placeholder: appState.localized("Full Name", arabic: "الاسم الكامل"),
+                                text: $name,
+                                keyboard: .default,
+                                field: .name
                             )
-                            textField(
-                                title: appState.localized("Arabic Name (optional)", arabic: "الاسم بالعربية (اختياري)"),
-                                text: $nameAr
+                            styledField(
+                                icon: "character.textbox",
+                                placeholder: appState.localized("Arabic Name (optional)", arabic: "الاسم بالعربية (اختياري)"),
+                                text: $nameAr,
+                                keyboard: .default,
+                                field: .nameAr
                             )
                         }
-                    }
-                    
-                    VStack(spacing: 12) {
-                        textField(
-                            title: appState.localized("Phone Number", arabic: "رقم الهاتف"),
+
+                        styledField(
+                            icon: "phone",
+                            placeholder: appState.localized("Phone Number", arabic: "رقم الهاتف"),
                             text: $phone,
-                            keyboard: .phonePad
+                            keyboard: .phonePad,
+                            field: .phone
                         )
-                        
-                        HStack(alignment: .top, spacing: 12) {
-                            textField(
-                                title: appState.localized("OTP Code", arabic: "رمز التحقق"),
-                                text: $code,
-                                keyboard: .numberPad
-                            )
-                            
-                            Button {
-                                Task { await sendOTP() }
-                            } label: {
-                                HStack {
-                                    if isSendingOTP {
-                                        ProgressView()
-                                    } else {
-                                        Text(otpSent
-                                            ? appState.localized("Resend", arabic: "إعادة الإرسال")
-                                            : appState.localized("Send Code", arabic: "إرسال الرمز"))
-                                    }
-                                }
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white)
-                                .padding(.horizontal, 14)
-                                .padding(.vertical, 14)
-                                .frame(minWidth: 110)
-                                .background(Color.accentColor)
-                                .clipShape(RoundedRectangle(cornerRadius: 12))
-                            }
-                            .disabled(isSendingOTP || normalizedPhone.isEmpty)
-                        }
                     }
-                    
-                    if let infoMessage {
-                        Text(infoMessage)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    
+
+                    // ── Error ────────────────────────
                     if let errorMessage = localError ?? authManager.error {
-                        Text(errorMessage)
-                            .font(.caption)
-                            .foregroundStyle(.red)
+                        HStack(spacing: 6) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .font(.caption)
+                            Text(errorMessage)
+                                .font(.caption)
+                        }
+                        .foregroundStyle(.red)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    
+
+                    // ── Submit ───────────────────────
                     Button {
+                        focusedField = nil
                         Task { await submit() }
                     } label: {
-                        HStack {
+                        HStack(spacing: 8) {
                             if authManager.isLoading {
                                 ProgressView()
                                     .tint(.white)
                             } else {
                                 Text(primaryButtonTitle)
-                                    .font(.headline)
+                                    .font(.body.weight(.semibold))
                             }
                         }
                         .frame(maxWidth: .infinity)
-                        .padding(.vertical, 16)
+                        .padding(.vertical, 17)
                         .foregroundStyle(.white)
                         .background(
                             canSubmit
-                                ? Color.accentColor
-                                : Color.gray.opacity(0.45)
+                                ? AnyShapeStyle(accentGradient)
+                                : AnyShapeStyle(Color.gray.opacity(0.35))
                         )
                         .clipShape(RoundedRectangle(cornerRadius: 16))
+                        .shadow(color: canSubmit ? Color(hex: "667EEA").opacity(0.35) : .clear, radius: 10, y: 4)
                     }
                     .buttonStyle(.plain)
                     .disabled(!canSubmit || authManager.isLoading)
+                    .animation(.easeInOut(duration: 0.2), value: canSubmit)
                 }
                 .padding(24)
+                .padding(.top, 4)
             }
-            .navigationTitle(mode == .signIn
-                ? appState.localized("Sign In", arabic: "تسجيل الدخول")
-                : appState.localized("Create Account", arabic: "إنشاء حساب"))
+            .scrollDismissesKeyboard(.interactively)
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
                 ToolbarItem(placement: .topBarTrailing) {
-                    Button(appState.localized("Cancel", arabic: "إلغاء")) {
+                    Button {
                         dismiss()
+                    } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.title3)
+                            .foregroundStyle(.secondary)
                     }
                 }
             }
         }
     }
-    
+
+    // MARK: - Mode Selector
+
+    private var modeSelector: some View {
+        HStack(spacing: 0) {
+            ForEach(AuthMode.allCases) { m in
+                Button {
+                    withAnimation(.spring(response: 0.35, dampingFraction: 0.8)) {
+                        mode = m
+                        localError = nil
+                        authManager.error = nil
+                    }
+                } label: {
+                    Text(m == .signIn
+                         ? appState.localized("Sign In", arabic: "تسجيل الدخول")
+                         : appState.localized("Create Account", arabic: "إنشاء حساب"))
+                        .font(.subheadline.weight(.semibold))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(mode == m ? Color.accentColor : Color.clear)
+                        .foregroundStyle(mode == m ? .white : .secondary)
+                }
+            }
+        }
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(.tertiarySystemBackground))
+        )
+    }
+
+    // MARK: - Styled Field
+
+    @ViewBuilder
+    private func styledField(icon: String, placeholder: String, text: Binding<String>, keyboard: UIKeyboardType, field: Field) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon)
+                .font(.body)
+                .foregroundStyle(.secondary)
+                .frame(width: 22)
+
+            TextField(placeholder, text: text)
+                .keyboardType(keyboard)
+                .textInputAutocapitalization(keyboard == .phonePad ? .never : .words)
+                .autocorrectionDisabled()
+                .focused($focusedField, equals: field)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 15)
+        .background(Color(.secondarySystemBackground))
+        .clipShape(RoundedRectangle(cornerRadius: 14))
+        .overlay(
+            RoundedRectangle(cornerRadius: 14)
+                .strokeBorder(focusedField == field ? Color.accentColor.opacity(0.5) : .clear, lineWidth: 1.5)
+        )
+        .animation(.easeInOut(duration: 0.15), value: focusedField)
+    }
+
+    // MARK: - Helpers
+
     private var roleTitle: String {
         role == .store
-            ? appState.localized("Store account", arabic: "حساب متجر")
-            : appState.localized("Customer account", arabic: "حساب عميل")
+            ? appState.localized("Store Account", arabic: "حساب متجر")
+            : appState.localized("Customer Account", arabic: "حساب عميل")
     }
-    
+
     private var primaryButtonTitle: String {
-        if mode == .signIn {
-            return role == .store
-                ? appState.localized("Sign In as Store", arabic: "دخول كمتجر")
-                : appState.localized("Sign In as Customer", arabic: "دخول كعميل")
-        }
-        
-        return role == .store
-            ? appState.localized("Create Store Account", arabic: "إنشاء حساب متجر")
-            : appState.localized("Create Customer Account", arabic: "إنشاء حساب عميل")
+        mode == .signIn
+            ? appState.localized("Sign In", arabic: "تسجيل الدخول")
+            : appState.localized("Create Account", arabic: "إنشاء حساب")
     }
-    
+
     private var normalizedPhone: String {
         phone.trimmingCharacters(in: .whitespacesAndNewlines)
     }
-    
+
     private var canSubmit: Bool {
-        let baseValid = !normalizedPhone.isEmpty && !code.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
-        if mode == .signIn {
-            return baseValid
-        }
-        return baseValid && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        let phoneOK = !normalizedPhone.isEmpty
+        if mode == .signIn { return phoneOK }
+        return phoneOK && !name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }
-    
-    @ViewBuilder
-    private func textField(title: String, text: Binding<String>, keyboard: UIKeyboardType = .default) -> some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.subheadline.weight(.medium))
-            TextField(title, text: text)
-                .keyboardType(keyboard)
-                .textInputAutocapitalization(.never)
-                .autocorrectionDisabled()
-                .padding(.horizontal, 14)
-                .padding(.vertical, 14)
-                .background(Color(.secondarySystemBackground))
-                .clipShape(RoundedRectangle(cornerRadius: 12))
-        }
-    }
-    
-    private func sendOTP() async {
-        localError = nil
-        infoMessage = nil
-        
-        guard !normalizedPhone.isEmpty else {
-            localError = appState.localized("Enter your phone number first.", arabic: "أدخل رقم الهاتف أولاً.")
-            return
-        }
-        
-        isSendingOTP = true
-        defer { isSendingOTP = false }
-        
-        do {
-            let response = try await APIClient.shared.sendOTP(phone: normalizedPhone)
-            otpSent = true
-            infoMessage = response.message
-            if let devOTP = response.devOtp, !devOTP.isEmpty {
-                infoMessage = "\(response.message) (\(devOTP))"
-            }
-        } catch let apiError as APIError {
-            localError = apiError.errorDescription
-        } catch {
-            localError = error.localizedDescription
-        }
-    }
-    
+
+    // MARK: - Submit
+
     private func submit() async {
         localError = nil
-        
+
         do {
             if mode == .signIn {
                 if role == .store {
-                    try await authManager.loginStore(phone: normalizedPhone, code: code)
+                    try await authManager.loginStore(phone: normalizedPhone)
                 } else {
-                    try await authManager.loginCustomer(phone: normalizedPhone, code: code)
+                    try await authManager.loginCustomer(phone: normalizedPhone)
                 }
             } else {
+                let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
                 if role == .store {
                     try await authManager.registerStore(
-                        name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                        name: trimmedName,
                         nameAr: nameAr.nilIfBlank,
-                        phone: normalizedPhone,
-                        code: code
+                        phone: normalizedPhone
                     )
                 } else {
                     try await authManager.registerCustomer(
-                        name: name.trimmingCharacters(in: .whitespacesAndNewlines),
+                        name: trimmedName,
                         nameAr: nameAr.nilIfBlank,
-                        phone: normalizedPhone,
-                        code: code
+                        phone: normalizedPhone
                     )
                 }
             }
@@ -452,6 +490,8 @@ private struct AuthSheetView: View {
     }
 }
 
+// MARK: - Utility Extensions
+
 private extension String {
     var nilIfBlank: String? {
         let trimmed = trimmingCharacters(in: .whitespacesAndNewlines)
@@ -459,7 +499,6 @@ private extension String {
     }
 }
 
-// MARK: - Hex Color Extension
 extension Color {
     init(hex: String) {
         let hex = hex.trimmingCharacters(in: CharacterSet.alphanumerics.inverted)

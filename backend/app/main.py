@@ -197,8 +197,7 @@ async def request_otp(request: Request, data: SendOTPRequest):
     
     response = {"message": "OTP sent", "phone": phone}
     
-    # In development, include the OTP for testing
-    if settings.ENVIRONMENT != "production":
+    if settings.ENVIRONMENT != "production" or not settings.OTP_ENABLED:
         response["dev_otp"] = get_dev_otp(phone)
     
     return response
@@ -209,12 +208,13 @@ async def request_otp(request: Request, data: SendOTPRequest):
 @app.post("/api/v1/auth/store/register", response_model=StoreAuthResponse)
 @limiter.limit(settings.RATE_LIMIT_AUTH)
 async def register_store(request: Request, data: RegisterRequest, db: AsyncSession = Depends(get_db)):
-    """Register a new store with OTP verification"""
+    """Register a new store"""
     phone = normalize_phone(data.phone)
 
-    valid, message = await verify_otp(phone, data.code)
-    if not valid:
-        raise HTTPException(status_code=401, detail=message)
+    if settings.OTP_ENABLED:
+        valid, message = await verify_otp(phone, data.code)
+        if not valid:
+            raise HTTPException(status_code=401, detail=message)
     
     # Check if phone exists
     result = await db.execute(select(Store).where(Store.phone == phone))
@@ -238,7 +238,7 @@ async def register_store(request: Request, data: RegisterRequest, db: AsyncSessi
 @app.post("/api/v1/auth/store/login", response_model=StoreAuthResponse)
 @limiter.limit(settings.RATE_LIMIT_AUTH)
 async def login_store(request: Request, data: LoginRequest, db: AsyncSession = Depends(get_db)):
-    """Login as store with OTP verification"""
+    """Login as store"""
     phone = normalize_phone(data.phone)
     
     result = await db.execute(select(Store).where(Store.phone == phone))
@@ -247,9 +247,10 @@ async def login_store(request: Request, data: LoginRequest, db: AsyncSession = D
     if not store:
         raise HTTPException(status_code=401, detail="Phone not registered")
     
-    valid, message = await verify_otp(phone, data.code)
-    if not valid:
-        raise HTTPException(status_code=401, detail=message)
+    if settings.OTP_ENABLED:
+        valid, message = await verify_otp(phone, data.code)
+        if not valid:
+            raise HTTPException(status_code=401, detail=message)
     
     access_token = create_access_token(store.id, "store")
     return StoreAuthResponse(token=access_token, store=StoreResponse.model_validate(store))
@@ -269,9 +270,10 @@ async def register_customer(request: Request, data: RegisterRequest, db: AsyncSe
     """Register a new customer"""
     phone = normalize_phone(data.phone)
 
-    valid, message = await verify_otp(phone, data.code)
-    if not valid:
-        raise HTTPException(status_code=401, detail=message)
+    if settings.OTP_ENABLED:
+        valid, message = await verify_otp(phone, data.code)
+        if not valid:
+            raise HTTPException(status_code=401, detail=message)
     
     result = await db.execute(select(Customer).where(Customer.phone == phone))
     if result.scalar_one_or_none():
@@ -293,7 +295,7 @@ async def register_customer(request: Request, data: RegisterRequest, db: AsyncSe
 @app.post("/api/v1/auth/customer/login", response_model=CustomerAuthResponse)
 @limiter.limit(settings.RATE_LIMIT_AUTH)
 async def login_customer(request: Request, data: LoginRequest, db: AsyncSession = Depends(get_db)):
-    """Login as customer with OTP verification"""
+    """Login as customer"""
     phone = normalize_phone(data.phone)
     
     result = await db.execute(select(Customer).where(Customer.phone == phone))
@@ -302,9 +304,10 @@ async def login_customer(request: Request, data: LoginRequest, db: AsyncSession 
     if not customer:
         raise HTTPException(status_code=401, detail="Phone not registered")
     
-    valid, message = await verify_otp(phone, data.code)
-    if not valid:
-        raise HTTPException(status_code=401, detail=message)
+    if settings.OTP_ENABLED:
+        valid, message = await verify_otp(phone, data.code)
+        if not valid:
+            raise HTTPException(status_code=401, detail=message)
     
     access_token = create_access_token(customer.id, "customer")
     return CustomerAuthResponse(token=access_token, customer=CustomerResponse.model_validate(customer))
@@ -950,7 +953,7 @@ async def terms_of_service():
 @app.post("/api/v1/seed")
 async def seed_demo_data(db: AsyncSession = Depends(get_db)):
     """Seed demo data for testing"""
-    if settings.ENVIRONMENT == "production":
+    if settings.ENVIRONMENT == "production" and settings.OTP_ENABLED:
         raise HTTPException(status_code=403, detail="Not available in production")
     
     import uuid
@@ -1025,7 +1028,7 @@ async def seed_demo_data(db: AsyncSession = Depends(get_db)):
 @app.get("/api/v1/demo/login")
 async def demo_login(db: AsyncSession = Depends(get_db)):
     """Quick demo login"""
-    if settings.ENVIRONMENT == "production":
+    if settings.ENVIRONMENT == "production" and settings.OTP_ENABLED:
         raise HTTPException(status_code=403, detail="Not available in production")
     
     result = await db.execute(select(Store).where(Store.join_code == "DEMO01"))

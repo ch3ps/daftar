@@ -189,14 +189,14 @@ class OCRResponse(BaseModel):
 
 class LoginRequest(BaseModel):
     phone: str
-    code: str
+    code: str = ""
 
 
 class RegisterRequest(BaseModel):
     name: str
     name_ar: Optional[str] = None
     phone: str
-    code: str
+    code: str = ""
 
 
 class JoinStoreRequest(BaseModel):

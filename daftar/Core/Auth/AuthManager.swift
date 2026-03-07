@@ -56,10 +56,18 @@ final class AuthManager: ObservableObject {
     
     private let keychain = KeychainService.shared
     private let api = APIClient.shared
+    private var sessionObserver: Any?
     
     init() {
         checkAuthState()
+        sessionObserver = NotificationCenter.default.addObserver(
+            forName: .authSessionExpired, object: nil, queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in self?.logout() }
+        }
     }
+    
+    deinit { if let o = sessionObserver { NotificationCenter.default.removeObserver(o) } }
     
     // MARK: - Check Existing Auth
     private func checkAuthState() {
@@ -85,7 +93,7 @@ final class AuthManager: ObservableObject {
     // MARK: - Store Authentication
     
     /// Register a new store with the backend
-    func registerStore(name: String, nameAr: String?, phone: String, code: String) async throws {
+    func registerStore(name: String, nameAr: String?, phone: String, code: String = "") async throws {
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -111,7 +119,7 @@ final class AuthManager: ObservableObject {
     }
     
     /// Login as store with phone + verification code
-    func loginStore(phone: String, code: String) async throws {
+    func loginStore(phone: String, code: String = "") async throws {
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -139,7 +147,7 @@ final class AuthManager: ObservableObject {
     // MARK: - Customer Authentication
     
     /// Register a new customer with the backend
-    func registerCustomer(name: String, nameAr: String?, phone: String, code: String) async throws {
+    func registerCustomer(name: String, nameAr: String?, phone: String, code: String = "") async throws {
         isLoading = true
         error = nil
         defer { isLoading = false }
@@ -165,7 +173,7 @@ final class AuthManager: ObservableObject {
     }
     
     /// Login as customer with phone + verification code
-    func loginCustomer(phone: String, code: String) async throws {
+    func loginCustomer(phone: String, code: String = "") async throws {
         isLoading = true
         error = nil
         defer { isLoading = false }
